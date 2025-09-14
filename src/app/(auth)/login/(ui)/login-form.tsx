@@ -1,22 +1,16 @@
 "use client";
 
 import * as customForm from "@/components/ui/form";
-import { useRegister } from "../(lib)/useRegister";
 import { TextInput } from "@/components/shared/form/text-input";
 import { PasswordInput } from "@/components/shared/form/password-input";
 import { Button } from "@/components/ui/button";
+import { useLogin } from "../(lib)/useLogin";
 
-export const RegisterForm = () => {
-  const { form, onRegister } = useRegister();
+export const LoginForm = () => {
+  const { form, handleAddDemoCredentials, onLogin } = useLogin();
   return (
     <customForm.Form {...form}>
-      <form className="flex flex-col gap-3" onSubmit={onRegister}>
-        <TextInput
-          form={form}
-          name="name"
-          label="Name"
-          placeholder="john doe"
-        />
+      <form className="flex flex-col gap-3" onSubmit={onLogin}>
         <TextInput
           form={form}
           name="email"
@@ -31,7 +25,15 @@ export const RegisterForm = () => {
         />
         <Button type="submit" className="mt-2 w-full cursor-pointer">
           {/* {isLoading ? "Logging in..." : "Login"} */}
-          Sign Up
+          Login
+        </Button>
+        <Button
+          type="button"
+          className="text-muted-foreground"
+          variant="ghost"
+          onClick={handleAddDemoCredentials}
+        >
+          Use Demo credentials
         </Button>
       </form>
     </customForm.Form>

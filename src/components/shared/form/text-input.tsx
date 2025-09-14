@@ -23,12 +23,16 @@ export const TextInput = ({
       control={form.control}
       name={name}
       render={({ field }) => (
-        <customForm.FormItem>
-          <customForm.FormLabel className="font-semibold">
+        <customForm.FormItem className="text-muted text-xs">
+          <customForm.FormLabel className="text-xs font-semibold">
             {label}
           </customForm.FormLabel>
           <customForm.FormControl>
-            <Input placeholder={placeholder} {...field} />
+            <Input
+              className="text-xs placeholder:text-xs"
+              placeholder={placeholder}
+              {...field}
+            />
           </customForm.FormControl>
           {/* show error message */}
           <customForm.FormMessage />

@@ -25,22 +25,23 @@ export const PasswordInput = ({ form, name, label, description }: IProps) => {
       control={form.control}
       name={name}
       render={({ field }) => (
-        <customForm.FormItem>
-          <customForm.FormLabel className="font-semibold">
+        <customForm.FormItem className="text-muted text-xs">
+          <customForm.FormLabel className="text-xs font-semibold">
             {label}
           </customForm.FormLabel>
           <customForm.FormControl>
             <div className="relative">
               <Input
+                className="text-xs placeholder:text-xs"
                 placeholder={"*******"}
                 type={isShown ? "text" : "password"}
                 {...field}
               />
               <div
                 onClick={onToggle}
-                className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer"
+                className="absolute top-1/2 right-2 -translate-y-1/2 cursor-pointer"
               >
-                {isShown ? <EyeOff /> : <Eye />}
+                {isShown ? <EyeOff size={18} /> : <Eye size={18} />}
               </div>
             </div>
           </customForm.FormControl>
