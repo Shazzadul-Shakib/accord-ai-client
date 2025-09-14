@@ -179,7 +179,7 @@ export default function Page() {
     >
       {/* Chat Header */}
       <div className="border-border bg-secondary border-b p-5 sm:px-6 sm:py-3">
-        <div className="flex max-w-6xl items-center justify-between mx-auto">
+        <div className="mx-auto flex max-w-6xl items-center justify-between">
           <div className="flex items-center gap-2">
             <button
               onClick={() => window.history.back()}
@@ -191,20 +191,43 @@ export default function Page() {
               Chat {selectedChatId}
             </h2>
           </div>
-          <div>
-            <Tooltip>
-              <TooltipTrigger
-                onClick={() => {
-                  /* Add AI summary generation logic */
-                }}
-                className="bg-primary flex items-center rounded-md px-2 py-1.5 sm:px-3 sm:text-sm"
-              >
-                <WandSparkles className="h-4 w-4 sm:h-6 sm:w-6" />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Generate Summary</p>
-              </TooltipContent>
-            </Tooltip>
+          <div className=" flex items-center gap-3">
+            <div>
+              <Tooltip>
+                <TooltipTrigger
+                  onClick={() => {
+                    /* Add AI summary generation logic */
+                  }}
+                  className="bg-primary flex items-center rounded-md px-2 py-1.5 sm:px-3 sm:text-sm cursor-pointer"
+                >
+                  <WandSparkles className="h-4 w-4 sm:h-6 sm:w-6" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Generate Summary</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+            <div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className={`hover:bg-border rounded-md p-1.5 cursor-pointer opacity-100`}
+                  >
+                    <MoreVertical className="h-6 w-6" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="bg-secondary text-muted/90">
+                  <DropdownMenuItem className="hover:bg-secondary focus:bg-secondary focus:text-muted/80 cursor-pointer text-xs sm:text-sm">
+                    <Edit className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                    Edit
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="hover:bg-destructive/20 focus:bg-destructive/20 focus:text-muted/80 cursor-pointer text-xs sm:text-sm">
+                    <Trash className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </div>
       </div>
