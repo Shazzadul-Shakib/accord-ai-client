@@ -24,14 +24,14 @@ export default function ChatSidebar({ chats }: ChatSidebarProps) {
     <div
       className={`${
         selectedChatId
-          ? "hidden lg:block lg:w-[450px] lg:border-r"
-          : "w-full lg:w-[450px] lg:border-r"
-      } bg-secondary border-border`}
+          ? "hidden lg:block lg:w-[450px] lg:border-r border-l-0 border-b-0"
+          : "w-full lg:w-[450px] lg:border-r border-l-0 border-b-0"
+      } bg-secondary  border-border`}
     >
       {/* Header */}
       <div className="border-border border-b-2 px-4 py-3">
         <div className="flex items-center justify-between">
-          <h1 className={`text-primary text-xl font-bold ${concert.className}`}>
+          <h1 className={`text-primary text-2xl font-bold ${concert.className}`}>
             ACCORD-AI
           </h1>
           <div>
@@ -58,10 +58,10 @@ export default function ChatSidebar({ chats }: ChatSidebarProps) {
       </div>
 
       {/* Chat List */}
-      <h1 className="text-primary mt-2 px-4 py-2 text-lg font-semibold">
+      <h1 className="text-primary mt-2 px-4 py-2 text-xl font-semibold">
         Conversations
       </h1>
-      <div className="h-[calc(100vh-180px)] overflow-y-auto">
+      <div className="h-[calc(100vh-175px)] overflow-y-auto">
         {chats.map((chat) => (
           <div
             key={chat.id}

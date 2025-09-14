@@ -59,7 +59,7 @@ const demoChats = [
 
 export default function Layout({ children }: LayoutProps) {
   return (
-    <div className="flex h-screen">
+    <div className="flex h-[100dvh]">
       {/* Chat List Sidebar - Server Component */}
       <ChatSidebar chats={demoChats} />
 
