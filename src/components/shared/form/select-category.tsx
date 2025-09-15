@@ -52,11 +52,11 @@ export const SelectUsers = ({
       render={({ field }) => {
         const selectedValues = field.value || defaultValue || [];
         const selectedUsers = users.filter((user) =>
-          selectedValues.includes(user.id)
+          selectedValues.includes(user.id),
         );
 
         const filteredUsers = users.filter((user) =>
-          user.name.toLowerCase().includes(searchQuery.toLowerCase())
+          user.name.toLowerCase().includes(searchQuery.toLowerCase()),
         );
 
         const handleSelect = (userId: string) => {
@@ -81,7 +81,8 @@ export const SelectUsers = ({
                   variant="outline"
                   className={cn(
                     "min-h-[40px] w-full justify-between",
-                    selectedValues.length === 0 && "text-muted-foreground"
+                    selectedValues.length === 0 &&
+                      "text-muted-foreground hover:text-muted hover:bg-border",
                   )}
                   onClick={() => setIsOpen(!isOpen)}
                 >
@@ -97,7 +98,7 @@ export const SelectUsers = ({
               </FormControl>
 
               {isOpen && (
-                <div className="rounded-md border border-input bg-background">
+                <div className="border-input bg-background rounded-md border">
                   <Input
                     placeholder="Search users..."
                     value={searchQuery}
@@ -114,13 +115,16 @@ export const SelectUsers = ({
                         {filteredUsers.map((user) => (
                           <div
                             key={user.id}
-                            className="flex items-center justify-between rounded-md p-2 hover:bg-border cursor-pointer"
+                            className="hover:bg-border flex cursor-pointer items-center justify-between rounded-md p-2"
                             onClick={() => handleSelect(user.id)}
                           >
                             <div className="flex items-center gap-3">
                               <div className="relative">
                                 <Avatar className="h-10 w-10">
-                                  <AvatarImage src={user.image} alt={user.name} />
+                                  <AvatarImage
+                                    src={user.image}
+                                    alt={user.name}
+                                  />
                                   <AvatarFallback className="text-sm">
                                     {user.name
                                       .split(" ")
@@ -140,7 +144,7 @@ export const SelectUsers = ({
                                 "h-4 w-4",
                                 selectedValues.includes(user.id)
                                   ? "opacity-100"
-                                  : "opacity-0"
+                                  : "opacity-0",
                               )}
                             />
                           </div>
@@ -158,7 +162,7 @@ export const SelectUsers = ({
                     <Badge
                       key={user.id}
                       variant="secondary"
-                      className="flex items-center gap-1 pr-1 pl-2 text-mute"
+                      className="text-mute flex items-center gap-1 pr-1 pl-2"
                     >
                       <Avatar className="h-4 w-4">
                         <AvatarImage src={user.image} alt={user.name} />
@@ -174,7 +178,7 @@ export const SelectUsers = ({
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-4 w-4 p-0 text-red-500 hover:text-mute"
+                        className="hover:text-mute h-4 w-4 p-0 text-red-500"
                         onClick={(e) => {
                           e.preventDefault();
                           handleRemove(user.id);
