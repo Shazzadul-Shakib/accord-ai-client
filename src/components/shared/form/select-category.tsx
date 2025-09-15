@@ -1,74 +1,196 @@
-// "use client";
+"use client";
 
-// import * as select from "@/components/ui/select";
-// import * as customForm from "@/components/ui/form";
+import * as React from "react";
+import { Check, ChevronsUpDown, X } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
-// import { ICategory } from "@/lib/types";
-// import { useQuery } from "@apollo/client";
-// import { GET_CATEGORIES } from "@/lib/query";
-// import { useSession } from "next-auth/react";
+interface User {
+  id: string;
+  name: string;
+  image: string;
+}
 
-// interface IProps {
-//   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-//   form: any;
-//   name: string;
-//   label: string;
-//   placeholder: string;
-//   defaultValue?: string;
-// }
+interface IProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  form: any;
+  name: string;
+  label: string;
+  placeholder: string;
+  defaultValue?: string[];
+  users?: User[];
+  loading?: boolean;
+}
 
-// export const SelectCategory = ({
-//   form,
-//   name,
-//   label,
-//   placeholder,
-//   defaultValue,
-// }: IProps) => {
-//   const { data: userInfo } = useSession();
-//   const { data, loading } = useQuery(GET_CATEGORIES, {
-//     variables: { userEmail: userInfo?.user?.email },
-//   });
+export const SelectUsers = ({
+  form,
+  name,
+  label,
+  placeholder,
+  defaultValue,
+  users = [],
+  loading = false,
+}: IProps) => {
+  const [isOpen, setIsOpen] = React.useState(false);
+  const [searchQuery, setSearchQuery] = React.useState("");
 
-//   const categories = data?.categories as ICategory[];
+  return (
+    <FormField
+      control={form.control}
+      name={name}
+      render={({ field }) => {
+        const selectedValues = field.value || defaultValue || [];
+        const selectedUsers = users.filter((user) =>
+          selectedValues.includes(user.id)
+        );
 
-//   return (
-//     <customForm.FormField
-//       control={form.control}
-//       name={name}
-//       render={({ field }) => (
-//         <customForm.FormItem>
-//           <customForm.FormLabel className="font-semibold">
-//             {label}
-//           </customForm.FormLabel>
-//           <select.Select
-//             onValueChange={field.onChange}
-//             defaultValue={field.value || defaultValue}
-//           >
-//             <customForm.FormControl>
-//               <select.SelectTrigger>
-//                 <select.SelectValue
-//                   placeholder={loading ? "Wait..." : placeholder}
-//                 />
-//               </select.SelectTrigger>
-//             </customForm.FormControl>
-//             <select.SelectContent>
-//               {categories?.map((category) => (
-//                 <select.SelectItem key={category.id} value={category.id}>
-//                   {category.name}
-//                 </select.SelectItem>
-//               ))}
-//               {!categories?.length && (
-//                 <span className="p-1 text-sm">
-//                   No category found, Create one
-//                 </span>
-//               )}
-//             </select.SelectContent>
-//           </select.Select>
-//           <customForm.FormMessage />
-//         </customForm.FormItem>
-//       )}
-//     />
-//   );
-// };
+        const filteredUsers = users.filter((user) =>
+          user.name.toLowerCase().includes(searchQuery.toLowerCase())
+        );
 
-// For demo how to use
+        const handleSelect = (userId: string) => {
+          const newValue = selectedValues.includes(userId)
+            ? selectedValues.filter((id: string) => id !== userId)
+            : [...selectedValues, userId];
+          field.onChange(newValue);
+        };
+
+        const handleRemove = (userId: string) => {
+          const newValue = selectedValues.filter((id: string) => id !== userId);
+          field.onChange(newValue);
+        };
+
+        return (
+          <FormItem className="w-full">
+            <FormLabel className="font-semibold">{label}</FormLabel>
+            <div className="w-full space-y-2">
+              <FormControl>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className={cn(
+                    "min-h-[40px] w-full justify-between",
+                    selectedValues.length === 0 && "text-muted-foreground"
+                  )}
+                  onClick={() => setIsOpen(!isOpen)}
+                >
+                  {selectedValues.length === 0
+                    ? loading
+                      ? "Loading users..."
+                      : placeholder
+                    : `${selectedValues.length} user${
+                        selectedValues.length === 1 ? "" : "s"
+                      } selected`}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </FormControl>
+
+              {isOpen && (
+                <div className="rounded-md border border-input bg-background">
+                  <Input
+                    placeholder="Search users..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="border-0 focus-visible:ring-0"
+                  />
+                  <ScrollArea className="h-[300px]">
+                    {loading ? (
+                      <div className="p-4 text-center">Loading users...</div>
+                    ) : filteredUsers.length === 0 ? (
+                      <div className="p-4 text-center">No users found.</div>
+                    ) : (
+                      <div className="p-2">
+                        {filteredUsers.map((user) => (
+                          <div
+                            key={user.id}
+                            className="flex items-center justify-between rounded-md p-2 hover:bg-border cursor-pointer"
+                            onClick={() => handleSelect(user.id)}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="relative">
+                                <Avatar className="h-10 w-10">
+                                  <AvatarImage src={user.image} alt={user.name} />
+                                  <AvatarFallback className="text-sm">
+                                    {user.name
+                                      .split(" ")
+                                      .map((n) => n[0])
+                                      .join("")
+                                      .slice(0, 2)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span className="absolute right-0 bottom-0 h-3 w-3 rounded-full border-2 border-white bg-green-500"></span>
+                              </div>
+                              <span className="text-sm font-medium">
+                                {user.name}
+                              </span>
+                            </div>
+                            <Check
+                              className={cn(
+                                "h-4 w-4",
+                                selectedValues.includes(user.id)
+                                  ? "opacity-100"
+                                  : "opacity-0"
+                              )}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </ScrollArea>
+                </div>
+              )}
+
+              {/* Selected users badges */}
+              {selectedUsers.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {selectedUsers.map((user) => (
+                    <Badge
+                      key={user.id}
+                      variant="secondary"
+                      className="flex items-center gap-1 pr-1 pl-2 text-mute"
+                    >
+                      <Avatar className="h-4 w-4">
+                        <AvatarImage src={user.image} alt={user.name} />
+                        <AvatarFallback className="text-xs">
+                          {user.name
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")
+                            .slice(0, 2)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="text-xs">{user.name}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-4 w-4 p-0 text-red-500 hover:text-mute"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleRemove(user.id);
+                        }}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
+            <FormMessage />
+          </FormItem>
+        );
+      }}
+    />
+  );
+};
