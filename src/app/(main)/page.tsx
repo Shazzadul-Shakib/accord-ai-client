@@ -217,7 +217,7 @@ export default function Page() {
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="bg-secondary text-muted/90">
-                  <DropdownMenuItem className="hover:bg-secondary focus:bg-secondary focus:text-muted/80 cursor-pointer text-xs sm:text-sm">
+                  <DropdownMenuItem className="hover:bg-border focus:bg-border focus:text-muted/80 cursor-pointer text-xs sm:text-sm">
                     <Edit className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                     Edit
                   </DropdownMenuItem>
@@ -259,7 +259,7 @@ export default function Page() {
                     align={msg.sender === "user" ? "start" : "end"}
                     className="bg-secondary text-muted/90"
                   >
-                    <DropdownMenuItem className="hover:bg-secondary focus:bg-secondary focus:text-muted/80 cursor-pointer text-xs sm:text-sm">
+                    <DropdownMenuItem className="hover:bg-border focus:bg-border focus:text-muted/80 cursor-pointer text-xs sm:text-sm">
                       <Edit className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                       Edit
                     </DropdownMenuItem>
