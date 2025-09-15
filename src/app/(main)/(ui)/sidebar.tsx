@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import * as customDialog from "@/components/ui/dialog";
+import AddTopicRequest from "./modals/add-topic-request";
 
 const concert = Concert_One({
   weight: "400",
@@ -92,13 +93,13 @@ export default function ChatSidebar({ chats }: ChatSidebarProps) {
             <customDialog.DialogContent>
               <customDialog.DialogHeader>
                 <customDialog.DialogTitle>
-                  Are you absolutely sure?
+                  Add Topic Request
                 </customDialog.DialogTitle>
                 <customDialog.DialogDescription>
-                  This action cannot be undone. This will permanently delete
-                  your account and remove your data from our servers.
+                  Create a new conversation by entering your topic or question
                 </customDialog.DialogDescription>
               </customDialog.DialogHeader>
+              <AddTopicRequest/>
             </customDialog.DialogContent>
           </customDialog.Dialog>
         </div>

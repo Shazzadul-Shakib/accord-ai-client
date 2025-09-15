@@ -178,7 +178,7 @@ export default function Page() {
       } bg-background flex h-full flex-col`}
     >
       {/* Chat Header */}
-      <div className="border-border bg-secondary border-b p-5 sm:px-6 sm:py-3">
+      <div className="border-border bg-secondary border-b p-4.5 sm:px-6 sm:py-3">
         <div className="mx-auto flex max-w-6xl items-center justify-between">
           <div className="flex items-center gap-2">
             <button
