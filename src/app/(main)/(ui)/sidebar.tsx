@@ -3,7 +3,16 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { Concert_One } from "next/font/google";
 import Image from "next/image";
-import { LogOut, PlusSquare, Search, User } from "lucide-react";
+import {
+  Bell,
+  LogOut,
+  MessageSquareDot,
+  MoreVertical,
+  PlusSquare,
+  Search,
+  Trash,
+  User,
+} from "lucide-react";
 import { ChatSidebarProps } from "../(lib)/sidebar-types";
 import {
   DropdownMenu,
@@ -36,14 +45,110 @@ export default function ChatSidebar({ chats }: ChatSidebarProps) {
       } bg-secondary border-border`}
     >
       {/* Header */}
-      <div className="border-border border-b-2 px-4 py-2">
+      <div className=" px-4 py-2">
         <div className="flex items-center justify-between">
           <h1
-            className={`text-primary text-2xl font-bold ${concert.className}`}
+            className={`text-primary text-2xl font-bold flex items-center gap-2 ${concert.className}`}
           >
+            <MessageSquareDot/>
             ACCORD-AI
           </h1>
-          <div>
+          <div className="flex items-center gap-4">
+            <div className="relative mt-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger className="relative">
+                  <Bell className="mr-2 h-4 w-4 sm:h-6 sm:w-6 cursor-pointer" />
+                  {/* Notification badge */}
+                  <div className="bg-primary absolute -top-1.5 right-1 flex h-4 w-4 items-center justify-center rounded-full">
+                    <span className="text-primary-foreground text-xs">3</span>
+                  </div>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  className="bg-secondary w-80 p-2"
+                  onCloseAutoFocus={(e) => e.preventDefault()}
+                >
+                  <div className="text-primary mb-2 px-2 py-1.5 font-semibold">
+                    Notifications
+                  </div>
+                  {[
+                    {
+                      id: 1,
+                      title: "New message from John",
+                      description: "Hey, how are you doing?",
+                      time: "2 min ago",
+                    },
+                    {
+                      id: 2,
+                      title: "System Update",
+                      description: "New features available",
+                      time: "1 hour ago",
+                    },
+                    {
+                      id: 3,
+                      title: "Security Alert",
+                      description: "New login detected",
+                      time: "2 hours ago",
+                    },
+                  ].map((notification) => (
+                    <div key={notification.id}>
+                      <customDialog.Dialog>
+                        <customDialog.DialogTrigger asChild>
+                          <DropdownMenuItem
+                            className="hover:bg-border focus:bg-border cursor-pointer rounded-md p-2"
+                            onSelect={(e) => e.preventDefault()}
+                          >
+                            <div className="flex w-full items-center justify-between">
+                              <div className="flex flex-col gap-1">
+                                <div className="text-muted text-xs">
+                                  {notification.description}
+                                </div>
+                                <div className="text-muted-foreground text-xs">
+                                  {notification.time}
+                                </div>
+                              </div>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger className="focus:outline-none">
+                                  <div className="hover:bg-border rounded-md p-1">
+                                    <MoreVertical className="h-6 w-6" />
+                                  </div>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent
+                                  align="end"
+                                  className="bg-secondary text-muted"
+                                >
+                                  <DropdownMenuItem className="focus:bg-destructive/20 focus:text-muted/80 cursor-pointer text-sm">
+                                    <Trash className="text-muted h-4 w-4" />
+                                    Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          </DropdownMenuItem>
+                        </customDialog.DialogTrigger>
+                        <customDialog.DialogContent>
+                          <customDialog.DialogHeader>
+                            <customDialog.DialogTitle>
+                              {notification.title}
+                            </customDialog.DialogTitle>
+                            <customDialog.DialogDescription>
+                              {notification.description}
+                            </customDialog.DialogDescription>
+                          </customDialog.DialogHeader>
+                          <div className="flex justify-end gap-2">
+                            <button className="bg-destructive text-destructive-foreground rounded-md px-4 py-2 text-sm">
+                              Reject
+                            </button>
+                            <button className="bg-primary text-primary-foreground rounded-md px-4 py-2 text-sm">
+                              Accept
+                            </button>
+                          </div>
+                        </customDialog.DialogContent>
+                      </customDialog.Dialog>
+                    </div>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
             <DropdownMenu>
               <DropdownMenuTrigger>
                 <Image
@@ -99,7 +204,7 @@ export default function ChatSidebar({ chats }: ChatSidebarProps) {
                   Create a new conversation by entering your topic or question
                 </customDialog.DialogDescription>
               </customDialog.DialogHeader>
-              <AddTopicRequest/>
+              <AddTopicRequest />
             </customDialog.DialogContent>
           </customDialog.Dialog>
         </div>
@@ -109,14 +214,14 @@ export default function ChatSidebar({ chats }: ChatSidebarProps) {
           <div
             key={chat.id}
             onClick={() => handleChatSelect(chat.id)}
-            className={`group relative mx-1 my-2 rounded-lg transition-all duration-200 ease-in-out ${
+            className={`group cursor-pointer relative mx-1 my-2 rounded-lg transition-all duration-200 ease-in-out ${
               selectedChatId === chat.id
                 ? "bg-primary/10 shadow-lg"
                 : "hover:bg-secondary/80"
             }`}
           >
             <div className="flex items-center gap-4 p-3">
-              <div className="bg-gradient-to-br from-primary/20 to-primary/10 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full shadow-sm ring-1 ring-primary/5">
+              <div className="from-primary/20 to-primary/10 ring-primary/5 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br shadow-sm ring-1">
                 <span className="text-primary text-lg font-medium">
                   {chat.title.charAt(0).toUpperCase()}
                 </span>
@@ -136,14 +241,19 @@ export default function ChatSidebar({ chats }: ChatSidebarProps) {
                 {chat.unread > 0 && (
                   <div className="mt-2">
                     <span className="bg-primary/90 text-primary-foreground inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium shadow-sm">
-                      {chat.unread} new {chat.unread === 1 ? "message" : "messages"}
+                      {chat.unread} new{" "}
+                      {chat.unread === 1 ? "message" : "messages"}
                     </span>
                   </div>
                 )}
               </div>
-              <div className={`absolute left-0 top-0 h-full w-1 rounded-l-lg transition-all duration-200 ${
-                selectedChatId === chat.id ? "bg-primary" : "bg-transparent group-hover:bg-primary/30"
-              }`} />
+              <div
+                className={`absolute top-0 left-0 h-full w-1 rounded-l-lg transition-all duration-200 ${
+                  selectedChatId === chat.id
+                    ? "bg-primary"
+                    : "group-hover:bg-primary/30 bg-transparent"
+                }`}
+              />
             </div>
           </div>
         ))}
