@@ -9,6 +9,7 @@ interface IProps {
   label: string;
   placeholder: string;
   description?: string;
+  defaultValue?: string;
 }
 
 export const TextInput = ({
@@ -17,11 +18,13 @@ export const TextInput = ({
   label,
   placeholder,
   description,
+  defaultValue,
 }: IProps) => {
   return (
     <customForm.FormField
       control={form.control}
       name={name}
+      defaultValue={defaultValue}
       render={({ field }) => (
         <customForm.FormItem className="text-muted text-xs">
           <customForm.FormLabel className="text-xs font-semibold">
@@ -31,6 +34,7 @@ export const TextInput = ({
             <Input
               className="text-xs placeholder:text-xs"
               placeholder={placeholder}
+              defaultValue={defaultValue}
               {...field}
             />
           </customForm.FormControl>
