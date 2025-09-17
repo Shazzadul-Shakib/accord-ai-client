@@ -1,6 +1,8 @@
 import axios from "axios";
 import * as jose from 'jose';
-const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL;
+import { baseUrl } from "./config";
+
+const baseURL = baseUrl;
 
 const apiClient = axios.create({
   baseURL,
@@ -14,9 +16,9 @@ apiClient.interceptors.request.use(
   (config) => {
     // Get token from JWT in cookies
     const token = document.cookie
-      .split('; ')
-      .find(row => row.startsWith('token='))
-      ?.split('=')[1];
+      .split("; ")
+      .find((row) => row.startsWith("accessToken="))
+      ?.split("=")[1];
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
