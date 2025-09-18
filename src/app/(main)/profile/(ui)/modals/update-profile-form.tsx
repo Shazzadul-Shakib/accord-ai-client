@@ -2,24 +2,18 @@
 import { TextInput } from "@/components/shared/form/text-input";
 import * as customForm from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
 import Image from "next/image";
 import { useProfile } from "../../(lib)/useProfile";
+import { Button } from "@/components/ui/button";
+import { ButtonLoader } from "@/components/shared/loader/button-loader";
 
-const UpdateProfile: React.FC = () => {
-  const { form, onUpdate } = useProfile();
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+interface UpdateProfileProps {
+  onSuccess?: () => void;
+}
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+const UpdateProfile: React.FC<UpdateProfileProps> = ({ onSuccess }) => {
+  const { form, onUpdate, imagePreview, handleImageChange, isUpdating } =
+    useProfile({onSuccess});
 
   return (
     <customForm.Form {...form}>
@@ -84,6 +78,13 @@ const UpdateProfile: React.FC = () => {
             </customForm.FormItem>
           )}
         />
+        <Button
+          type="submit"
+          className="mt-2 w-full cursor-pointer"
+          disabled={isUpdating}
+        >
+          {isUpdating ? <ButtonLoader text="Updating" /> : "Update"}
+        </Button>
       </form>
     </customForm.Form>
   );

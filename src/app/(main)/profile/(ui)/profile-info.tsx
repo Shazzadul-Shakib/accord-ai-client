@@ -12,8 +12,10 @@ import {
 } from "@/components/ui/dialog";
 import UpdateProfile from "./modals/update-profile-form";
 import { useProfile } from "../(lib)/useProfile";
+import { useState } from "react";
 
 const ProfileInfo: React.FC = () => {
+  const [open, setOpen] = useState(false);
   const {
     isLoggedUserLoading,
     loggedUser,
@@ -35,7 +37,11 @@ const ProfileInfo: React.FC = () => {
       <CardContent className="space-y-6">
         <div className="flex flex-col items-center space-y-4">
           <Avatar className="h-24 w-24">
-            <AvatarImage src={user.image || "/user.jpg"} alt={user.name} />
+            <AvatarImage
+              src={user.image || "/user.jpg"}
+              alt={user.name}
+              className="object-cover"
+            />
             <AvatarFallback>{user.name[0]}</AvatarFallback>
           </Avatar>
         </div>
@@ -52,7 +58,7 @@ const ProfileInfo: React.FC = () => {
           </div>
         </div>
 
-        <Dialog>
+        <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button className="w-full cursor-pointer">Update Profile</Button>
           </DialogTrigger>
@@ -60,12 +66,12 @@ const ProfileInfo: React.FC = () => {
             <DialogHeader>
               <DialogTitle>Update Profile</DialogTitle>
               <DialogDescription>
-                Make changes to your profile here. Click &apos;save&apos; when
-                you&apos;re done.
+                Make changes to your profile here
               </DialogDescription>
             </DialogHeader>
 
-            <UpdateProfile />
+            {/* ✅ pass onSuccess to close dialog */}
+            <UpdateProfile onSuccess={() => setOpen(false)} />
           </DialogContent>
         </Dialog>
       </CardContent>

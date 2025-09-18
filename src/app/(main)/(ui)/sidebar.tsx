@@ -38,9 +38,6 @@ export default function ChatSidebar({ chats }: ChatSidebarProps) {
     router.push(`?chat=${chatId}`);
   };
 
-  const handleProfileClick = () => {
-    router.push("/profile");
-  };
 
   // Hide sidebar for small and medium screens when on profile page
   if (pathname === "/profile") {
