@@ -22,7 +22,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import * as customDialog from "@/components/ui/dialog";
 import AddTopicRequest from "./modals/add-topic-request";
-import Link from "next/link";
+import { authApi } from "@/tanstack/api-services/authApi";
+import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { TErrorResponse } from "@/app/(auth)/login/(lib)/loginSchema";
+import Profile from "./profile/profile";
 
 const concert = Concert_One({
   weight: "400",
@@ -39,13 +43,15 @@ export default function ChatSidebar({ chats }: ChatSidebarProps) {
   };
 
   const handleProfileClick = () => {
-    router.push('/profile');
+    router.push("/profile");
   };
 
+  
+
   // Hide sidebar for small and medium screens when on profile page
-  if (pathname === '/profile') {
+  if (pathname === "/profile") {
     return (
-      <div className="lg:block hidden">
+      <div className="hidden lg:block">
         {/* Rest of the sidebar content */}
         <div
           className={`${
@@ -55,22 +61,24 @@ export default function ChatSidebar({ chats }: ChatSidebarProps) {
           } bg-secondary border-border`}
         >
           {/* Header */}
-          <div className=" px-4 py-2">
+          <div className="px-4 py-2">
             <div className="flex items-center justify-between">
               <h1
-                className={`text-primary text-2xl font-bold flex items-center gap-2 ${concert.className}`}
+                className={`text-primary flex items-center gap-2 text-2xl font-bold ${concert.className}`}
               >
-                <MessageSquareDot/>
+                <MessageSquareDot />
                 ACCORD-AI
               </h1>
               <div className="flex items-center gap-4">
                 <div className="relative mt-2">
                   <DropdownMenu>
                     <DropdownMenuTrigger className="relative">
-                      <Bell className="mr-2 h-4 w-4 sm:h-6 sm:w-6 cursor-pointer" />
+                      <Bell className="mr-2 h-4 w-4 cursor-pointer sm:h-6 sm:w-6" />
                       {/* Notification badge */}
                       <div className="bg-primary absolute -top-1.5 right-1 flex h-4 w-4 items-center justify-center rounded-full">
-                        <span className="text-primary-foreground text-xs">3</span>
+                        <span className="text-primary-foreground text-xs">
+                          3
+                        </span>
                       </div>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
@@ -170,7 +178,7 @@ export default function ChatSidebar({ chats }: ChatSidebarProps) {
                     />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="bg-secondary text-muted/90">
-                    <DropdownMenuItem 
+                    <DropdownMenuItem
                       className="hover:bg-border focus:bg-border focus:text-muted/80 cursor-pointer text-xs sm:text-sm"
                       onClick={handleProfileClick}
                     >
@@ -214,7 +222,8 @@ export default function ChatSidebar({ chats }: ChatSidebarProps) {
                       Add Topic Request
                     </customDialog.DialogTitle>
                     <customDialog.DialogDescription>
-                      Create a new conversation by entering your topic or question
+                      Create a new conversation by entering your topic or
+                      question
                     </customDialog.DialogDescription>
                   </customDialog.DialogHeader>
                   <AddTopicRequest />
@@ -227,7 +236,7 @@ export default function ChatSidebar({ chats }: ChatSidebarProps) {
               <div
                 key={chat.id}
                 onClick={() => handleChatSelect(chat.id)}
-                className={`group cursor-pointer relative mx-1 my-2 rounded-lg transition-all duration-200 ease-in-out ${
+                className={`group relative mx-1 my-2 cursor-pointer rounded-lg transition-all duration-200 ease-in-out ${
                   selectedChatId === chat.id
                     ? "bg-primary/10 shadow-lg"
                     : "hover:bg-secondary/80"
@@ -346,6 +355,7 @@ export default function ChatSidebar({ chats }: ChatSidebarProps) {
                                   {notification.time}
                                 </div>
                               </div>
+
                               <DropdownMenu>
                                 <DropdownMenuTrigger className="focus:outline-none">
                                   <div className="hover:bg-border rounded-md p-1">
@@ -389,31 +399,7 @@ export default function ChatSidebar({ chats }: ChatSidebarProps) {
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger>
-                <Image
-                  src="/user.jpg"
-                  alt="user profile"
-                  height={33}
-                  width={33}
-                  className="border-primary h-[36px] w-[36px] cursor-pointer rounded-full border-[3px] object-cover"
-                />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-secondary text-muted/90">
-                <Link href="/profile">
-                  <DropdownMenuItem
-                    className="hover:bg-border focus:bg-border focus:text-muted/80 cursor-pointer text-xs sm:text-sm"
-                  >
-                    <User className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                    Profile
-                  </DropdownMenuItem>
-                </Link>
-                <DropdownMenuItem className="hover:bg-destructive/20 focus:bg-destructive/20 focus:text-muted/80 cursor-pointer text-xs sm:text-sm">
-                  <LogOut className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                  Log out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Profile />
           </div>
         </div>
       </div>

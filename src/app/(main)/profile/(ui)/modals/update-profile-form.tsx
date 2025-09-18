@@ -4,10 +4,10 @@ import * as customForm from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import Image from "next/image";
-import { useUpdateProfile } from "../../(lib)/useUpdateProfile";
+import { useProfile } from "../../(lib)/useProfile";
 
 const UpdateProfile: React.FC = () => {
-  const { form, onUpdate } = useUpdateProfile();
+  const { form, onUpdate } = useProfile();
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
