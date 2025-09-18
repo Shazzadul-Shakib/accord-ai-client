@@ -9,21 +9,28 @@ import { LogOut, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useLogout } from "../../(lib)/profile/useLogout";
+import { useProfile } from "../../profile/(lib)/useProfile";
 
 const Profile: React.FC = () => {
   const { logout, isLoading } = useLogout();
+  const { isLoggedUserLoading, loggedUser } = useProfile();
+
 
   return (
     <div>
       <DropdownMenu>
         <DropdownMenuTrigger>
-          <Image
-            src="/user.jpg"
-            alt="user profile"
-            height={33}
-            width={33}
-            className="border-primary h-[36px] w-[36px] cursor-pointer rounded-full border-[3px] object-cover"
-          />
+          {isLoggedUserLoading ? (
+            <div className="h-[36px] w-[36px] animate-pulse rounded-full bg-muted" />
+          ) : (
+            <Image
+              src={loggedUser?.data?.image || "/user.jpg"}
+              alt={loggedUser?.data?.name || "user profile"}
+              height={33}
+              width={33}
+              className="border-primary h-[36px] w-[36px] cursor-pointer rounded-full border-[3px] object-cover"
+            />
+          )}
         </DropdownMenuTrigger>
         <DropdownMenuContent className="bg-secondary text-muted/90">
           <Link href="/profile">

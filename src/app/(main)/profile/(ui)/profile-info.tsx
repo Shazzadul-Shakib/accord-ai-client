@@ -32,7 +32,7 @@ const ProfileInfo: React.FC = () => {
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="flex flex-col items-center space-y-4">
-          <Avatar className="h-24 w-24">
+          <Avatar className="border-primary h-28 w-28 border-4">
             <AvatarImage
               src={user.image || "/user.jpg"}
               alt={user.name}

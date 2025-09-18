@@ -2,16 +2,13 @@
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Concert_One } from "next/font/google";
-import Image from "next/image";
 import {
   Bell,
-  LogOut,
   MessageSquareDot,
   MoreVertical,
   PlusSquare,
   Search,
   Trash,
-  User,
 } from "lucide-react";
 import { ChatSidebarProps } from "../(lib)/sidebar-types";
 import {
@@ -23,21 +20,28 @@ import {
 import * as customDialog from "@/components/ui/dialog";
 import AddTopicRequest from "./modals/add-topic-request";
 import Profile from "./profile/profile";
+import { useSidebar } from "../(lib)/useSidebar";
 
 const concert = Concert_One({
   weight: "400",
 });
 
-export default function ChatSidebar({ chats }: ChatSidebarProps) {
+export default function ChatSidebar() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const selectedChatId = searchParams.get("chat");
 
+  const { isChatListLoading, chatList} =
+    useSidebar();
+
+  if (isChatListLoading) {
+    return <div>Loading...</div>;
+  }
   const handleChatSelect = (chatId: string) => {
     router.push(`?chat=${chatId}`);
   };
-
+  const chats = chatList?.data;
 
   // Hide sidebar for small and medium screens when on profile page
   if (pathname === "/profile") {
@@ -61,7 +65,7 @@ export default function ChatSidebar({ chats }: ChatSidebarProps) {
                 ACCORD-AI
               </h1>
               <div className="flex items-center gap-4">
-                <div className="relative mt-2">
+                <div className="relative">
                   <DropdownMenu>
                     <DropdownMenuTrigger className="relative">
                       <Bell className="mr-2 h-4 w-4 cursor-pointer sm:h-6 sm:w-6" />
@@ -202,10 +206,10 @@ export default function ChatSidebar({ chats }: ChatSidebarProps) {
           <div className="h-[calc(100vh-175px)] overflow-y-auto px-2">
             {chats.map((chat) => (
               <div
-                key={chat.id}
-                onClick={() => handleChatSelect(chat.id)}
+                key={chat.roomId}
+                onClick={() => handleChatSelect(chat.roomId)}
                 className={`group relative mx-1 my-2 cursor-pointer rounded-lg transition-all duration-200 ease-in-out ${
-                  selectedChatId === chat.id
+                  selectedChatId === chat.roomId
                     ? "bg-primary/10 shadow-lg"
                     : "hover:bg-secondary/80"
                 }`}
@@ -213,33 +217,54 @@ export default function ChatSidebar({ chats }: ChatSidebarProps) {
                 <div className="flex items-center gap-4 p-3">
                   <div className="from-primary/20 to-primary/10 ring-primary/5 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br shadow-sm ring-1">
                     <span className="text-primary text-lg font-medium">
-                      {chat.title.charAt(0).toUpperCase()}
+                      {chat.topicTitle.charAt(0).toUpperCase()}
                     </span>
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between">
                       <h3 className="text-primary/90 truncate text-sm font-semibold">
-                        {chat.title}
+                        {chat.topicTitle}
                       </h3>
                       <p className="text-muted/60 text-xs font-medium">
-                        {chat.timestamp}
+                        {(() => {
+                          const date = new Date(chat.lastMessageTime);
+                          const now = new Date();
+                          const diffInMinutes = Math.floor(
+                            (now.getTime() - date.getTime()) / (1000 * 60),
+                          );
+
+                          if (diffInMinutes < 1) return "just now";
+                          if (diffInMinutes < 60)
+                            return `${diffInMinutes}m ago`;
+
+                          const diffInHours = Math.floor(diffInMinutes / 60);
+                          if (diffInHours < 24) return `${diffInHours}h ago`;
+
+                          const diffInDays = Math.floor(diffInHours / 24);
+                          if (diffInDays < 7) return `${diffInDays}d ago`;
+
+                          return date.toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                          });
+                        })()}
                       </p>
                     </div>
                     <p className="text-muted/70 mt-0.5 line-clamp-1 text-xs">
                       {chat.lastMessage}
                     </p>
-                    {chat.unread > 0 && (
+                    {/* {chat.unread > 0 && (
                       <div className="mt-2">
                         <span className="bg-primary/90 text-primary-foreground inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium shadow-sm">
                           {chat.unread} new{" "}
                           {chat.unread === 1 ? "message" : "messages"}
                         </span>
                       </div>
-                    )}
+                    )} */}
                   </div>
                   <div
                     className={`absolute top-0 left-0 h-full w-1 rounded-l-lg transition-all duration-200 ${
-                      selectedChatId === chat.id
+                      selectedChatId === chat.roomId
                         ? "bg-primary"
                         : "group-hover:bg-primary/30 bg-transparent"
                     }`}
@@ -410,10 +435,10 @@ export default function ChatSidebar({ chats }: ChatSidebarProps) {
       <div className="h-[calc(100vh-175px)] overflow-y-auto px-2">
         {chats.map((chat) => (
           <div
-            key={chat.id}
-            onClick={() => handleChatSelect(chat.id)}
+            key={chat.roomId}
+            onClick={() => handleChatSelect(chat.roomId)}
             className={`group relative mx-1 my-2 cursor-pointer rounded-lg transition-all duration-200 ease-in-out ${
-              selectedChatId === chat.id
+              selectedChatId === chat.roomId
                 ? "bg-primary/10 shadow-lg"
                 : "hover:bg-secondary/80"
             }`}
@@ -421,33 +446,53 @@ export default function ChatSidebar({ chats }: ChatSidebarProps) {
             <div className="flex items-center gap-4 p-3">
               <div className="from-primary/20 to-primary/10 ring-primary/5 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br shadow-sm ring-1">
                 <span className="text-primary text-lg font-medium">
-                  {chat.title.charAt(0).toUpperCase()}
+                  {chat.topicTitle.charAt(0).toUpperCase()}
                 </span>
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between">
                   <h3 className="text-primary/90 truncate text-sm font-semibold">
-                    {chat.title}
+                    {chat.topicTitle}
                   </h3>
                   <p className="text-muted/60 text-xs font-medium">
-                    {chat.timestamp}
+                    {(() => {
+                      const date = new Date(chat.lastMessageTime);
+                      const now = new Date();
+                      const diffInMinutes = Math.floor(
+                        (now.getTime() - date.getTime()) / (1000 * 60),
+                      );
+
+                      if (diffInMinutes < 1) return "just now";
+                      if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+
+                      const diffInHours = Math.floor(diffInMinutes / 60);
+                      if (diffInHours < 24) return `${diffInHours}h ago`;
+
+                      const diffInDays = Math.floor(diffInHours / 24);
+                      if (diffInDays < 7) return `${diffInDays}d ago`;
+
+                      return date.toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                      });
+                    })()}
                   </p>
                 </div>
                 <p className="text-muted/70 mt-0.5 line-clamp-1 text-xs">
                   {chat.lastMessage}
                 </p>
-                {chat.unread > 0 && (
-                  <div className="mt-2">
-                    <span className="bg-primary/90 text-primary-foreground inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium shadow-sm">
-                      {chat.unread} new{" "}
-                      {chat.unread === 1 ? "message" : "messages"}
-                    </span>
-                  </div>
-                )}
+                {/* {chat.unread > 0 && (
+                      <div className="mt-2">
+                        <span className="bg-primary/90 text-primary-foreground inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium shadow-sm">
+                          {chat.unread} new{" "}
+                          {chat.unread === 1 ? "message" : "messages"}
+                        </span>
+                      </div>
+                    )} */}
               </div>
               <div
                 className={`absolute top-0 left-0 h-full w-1 rounded-l-lg transition-all duration-200 ${
-                  selectedChatId === chat.id
+                  selectedChatId === chat.roomId
                     ? "bg-primary"
                     : "group-hover:bg-primary/30 bg-transparent"
                 }`}
