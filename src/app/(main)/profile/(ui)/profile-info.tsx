@@ -20,10 +20,9 @@ const ProfileInfo: React.FC = () => {
     IsLoggedUserError,
     loggedUserError,
   } = useProfile();
-  
 
-  if(isLoggedUserLoading){
-    return <>Loading...</>
+  if (isLoggedUserLoading) {
+    return <>Loading...</>;
   }
   const user = loggedUser.data;
   return (
@@ -36,7 +35,7 @@ const ProfileInfo: React.FC = () => {
       <CardContent className="space-y-6">
         <div className="flex flex-col items-center space-y-4">
           <Avatar className="h-24 w-24">
-            <AvatarImage src={user.image ?? "/user.jpg"} alt={user.name} />
+            <AvatarImage src={user.image || "/user.jpg"} alt={user.name} />
             <AvatarFallback>{user.name[0]}</AvatarFallback>
           </Avatar>
         </div>

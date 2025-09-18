@@ -22,10 +22,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import * as customDialog from "@/components/ui/dialog";
 import AddTopicRequest from "./modals/add-topic-request";
-import { authApi } from "@/tanstack/api-services/authApi";
-import { useMutation } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { TErrorResponse } from "@/app/(auth)/login/(lib)/loginSchema";
 import Profile from "./profile/profile";
 
 const concert = Concert_One({
@@ -45,8 +41,6 @@ export default function ChatSidebar({ chats }: ChatSidebarProps) {
   const handleProfileClick = () => {
     router.push("/profile");
   };
-
-  
 
   // Hide sidebar for small and medium screens when on profile page
   if (pathname === "/profile") {
@@ -167,30 +161,7 @@ export default function ChatSidebar({ chats }: ChatSidebarProps) {
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger>
-                    <Image
-                      src="/user.jpg"
-                      alt="user profile"
-                      height={33}
-                      width={33}
-                      className="border-primary h-[36px] w-[36px] cursor-pointer rounded-full border-[3px] object-cover"
-                    />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="bg-secondary text-muted/90">
-                    <DropdownMenuItem
-                      className="hover:bg-border focus:bg-border focus:text-muted/80 cursor-pointer text-xs sm:text-sm"
-                      onClick={handleProfileClick}
-                    >
-                      <User className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                      Profile
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="hover:bg-destructive/20 focus:bg-destructive/20 focus:text-muted/80 cursor-pointer text-xs sm:text-sm">
-                      <LogOut className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                      Log out
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <Profile />
               </div>
             </div>
           </div>
