@@ -6,3 +6,7 @@ export const loginSchema = z.object({
 });
 
 export type TLoginFormValues = z.infer<typeof loginSchema>;
+export type TErrorResponse = {
+  status: number;
+  data: { status: string; message: string; success: boolean };
+};

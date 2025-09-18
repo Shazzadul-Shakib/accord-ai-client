@@ -1,6 +1,6 @@
 import axios from "axios";
-import * as jose from 'jose';
-import { baseUrl } from "./config";
+import * as jose from "jose";
+import { accessSecret, baseUrl } from "./config";
 
 const baseURL = baseUrl;
 
@@ -27,7 +27,7 @@ apiClient.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 // Response interceptor for refresh logic
@@ -36,38 +36,65 @@ apiClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // 1️⃣ Skip token refresh for login/register requests
+    if (
+      originalRequest?.url?.includes("/login") ||
+      originalRequest?.url?.includes("/register")
+    ) {
+      return Promise.reject(error);
+    }
+
+    // 2️⃣ Handle 401 errors for protected routes
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
       try {
-        const response = await apiClient.post("/auth/refresh");
-        // Assuming the refresh endpoint returns a new token
-        const newToken = response.data.token;
-        
-        // Verify and decode the token using jose
-        const { payload } = await jose.jwtVerify(
-          newToken,
-          new TextEncoder().encode(process.env.NEXT_PUBLIC_JWT_SECRET || '')
+        // 3️⃣ Call refresh token endpoint
+        const response = await apiClient.post("/user/refresh-token");
+
+        // 4️⃣ Extract access token from cookie
+        const cookieHeader = response.headers["set-cookie"] || "";
+        const accessTokenMatch = cookieHeader
+          .toString()
+          .match(/accessToken=([^;]+)/);
+        if (!accessTokenMatch) throw new Error("No access token found");
+
+        const newAccessToken = accessTokenMatch[1];
+
+        // 5️⃣ Optionally decode JWT if needed (for expiry, etc.)
+        await jose.jwtVerify(
+          newAccessToken,
+          new TextEncoder().encode(accessSecret || ""),
         );
-        
-        // Set the token in cookie with expiry from JWT payload
-        document.cookie = `token=${newToken}; expires=${new Date(payload.exp! * 1000).toUTCString()}; path=/`;
-        
-        // Update the failed request with new token
-        originalRequest.headers.Authorization = `Bearer ${newToken}`;
-        return apiClient(originalRequest); // retry the failed request
+
+        // 6️⃣ Set Authorization header and retry original request
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        return apiClient(originalRequest);
       } catch (err) {
         console.error("Token refresh failed:", err);
-        // Clear token on refresh failure
-        document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        // Clear cookie or token here if needed
+        document.cookie =
+          "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
 
         if (typeof window !== "undefined") {
-          window.location.href = "/login"; // client-side redirect
+          window.location.href = "/login"; // only redirect if refresh fails
         }
       }
     }
 
+    // 7️⃣ Forward all other errors to React Query
     return Promise.reject(error);
+  },
+);
+
+// Response interceptor to handle errors consistently
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    return Promise.reject({
+      status: error?.response?.status,
+      data: error?.response?.data,
+    });
   },
 );
 

@@ -4,4 +4,4 @@ const loginUser = async (data: object) => {
   return apiService.post("/user/login", data);
 };
 
-export const authQuery = { loginUser };
+export const authApi = { loginUser };

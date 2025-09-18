@@ -1,9 +1,10 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { loginSchema, TLoginFormValues } from "./loginSchema";
+import { loginSchema, TErrorResponse, TLoginFormValues } from "./loginSchema";
 import { useMutation } from "@tanstack/react-query";
-import { authQuery } from "@/tanstack/queryFunctions/authQuery";
 import { useRouter } from "next/navigation";
+import { authApi } from "@/tanstack/api-services/authApi";
+import { toast } from "sonner";
 
 export const useLogin = () => {
   const router = useRouter();
@@ -16,22 +17,23 @@ export const useLogin = () => {
   });
 
   const { mutate: login, isPending: isLoading } = useMutation({
-    mutationFn: authQuery.loginUser,
+    mutationFn: authApi.loginUser,
     onSuccess: (data) => {
-      console.log("Login successful:", data);
-      // Handle success (e.g., redirect, show success message)
+      toast.success(data.message || "Login Successful");
       router.replace("/");
+    },
+    onError: (error: TErrorResponse) => {
+      toast.error(error.data.message || "Login unsuccessfull");
     },
   });
 
   const handleAddDemoCredentials = () => {
-    form.setValue("email", "demo@gmail.com");
+    form.setValue("email", "astro@gmail.com");
     form.setValue("password", "123456");
   };
 
   const onLogin = form.handleSubmit((formData) => {
-    const res = login(formData);
-    console.log(res);
+    login(formData);
   });
 
   return { form, handleAddDemoCredentials, onLogin, isLoading };

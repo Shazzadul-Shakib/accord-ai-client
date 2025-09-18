@@ -5,9 +5,10 @@ import { TextInput } from "@/components/shared/form/text-input";
 import { PasswordInput } from "@/components/shared/form/password-input";
 import { Button } from "@/components/ui/button";
 import { useLogin } from "../(lib)/useLogin";
+import { ButtonLoader } from "@/components/shared/loader/button-loader";
 
 export const LoginForm = () => {
-  const { form, handleAddDemoCredentials, onLogin } = useLogin();
+  const { form, handleAddDemoCredentials, onLogin, isLoading } = useLogin();
   return (
     <customForm.Form {...form}>
       <form className="flex flex-col gap-3" onSubmit={onLogin}>
@@ -23,9 +24,12 @@ export const LoginForm = () => {
           label="Password"
           placeholder="@John Doe"
         />
-        <Button type="submit" className="mt-2 w-full cursor-pointer">
-          {/* {isLoading ? "Logging in..." : "Login"} */}
-          Login
+        <Button
+          type="submit"
+          className="mt-2 w-full cursor-pointer"
+          disabled={isLoading}
+        >
+          {isLoading ? <ButtonLoader text="Logging in" /> : "Login"}
         </Button>
         <Button
           type="button"
