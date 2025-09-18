@@ -13,7 +13,7 @@ interface UpdateProfileProps {
 
 const UpdateProfile: React.FC<UpdateProfileProps> = ({ onSuccess }) => {
   const { form, onUpdate, imagePreview, handleImageChange, isUpdating } =
-    useProfile({onSuccess});
+    useProfile({ onSuccess });
 
   return (
     <customForm.Form {...form}>

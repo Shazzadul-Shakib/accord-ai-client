@@ -13,18 +13,14 @@ import {
 import UpdateProfile from "./modals/update-profile-form";
 import { useProfile } from "../(lib)/useProfile";
 import { useState } from "react";
+import { ProfileInfoSkeleton } from "./skeletons/profile-info-skeleton";
 
 const ProfileInfo: React.FC = () => {
   const [open, setOpen] = useState(false);
-  const {
-    isLoggedUserLoading,
-    loggedUser,
-    IsLoggedUserError,
-    loggedUserError,
-  } = useProfile();
+  const { isLoggedUserLoading, loggedUser, isUpdating } = useProfile();
 
-  if (isLoggedUserLoading) {
-    return <>Loading...</>;
+  if (isLoggedUserLoading || isUpdating) {
+    return <ProfileInfoSkeleton />;
   }
   const user = loggedUser.data;
   return (
