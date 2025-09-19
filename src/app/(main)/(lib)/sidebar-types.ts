@@ -1,11 +1,6 @@
-export interface Chat {
-  id: string;
-  title: string;
+export interface IChat {
+  roomId: string;
+  topicTitle: string;
   lastMessage: string;
-  timestamp: string;
-  unread: number;
-}
-
-export interface ChatSidebarProps {
-  chats: Chat[];
+  lastMessageTime: string;
 }
