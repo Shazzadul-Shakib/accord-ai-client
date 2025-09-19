@@ -8,10 +8,15 @@ import { SelectUsers } from "@/components/shared/form/select-category";
 import { useSidebar } from "../../(lib)/useSidebar";
 import { ButtonLoader } from "@/components/shared/loader/button-loader";
 
-const AddTopicRequest: React.FC = () => {
+interface OptionProps {
+  onSuccess?: () => void;
+}
+
+const AddTopicRequest: React.FC<OptionProps> = ({ onSuccess }) => {
   const { isAllUsersLoading, allUsers } = useSidebar();
-  const { form, onRequest, addTopicRequest, isAddTopicRequestLoading } =
-    useAddTopicRequest();
+  const { form, onRequest, isAddTopicRequestLoading } = useAddTopicRequest({
+    onSuccess,
+  });
   const users = allUsers.data;
   return (
     <customForm.Form {...form}>

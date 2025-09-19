@@ -33,6 +33,7 @@ export const useLogin = () => {
   };
 
   const onLogin = form.handleSubmit((formData) => {
+    console.log(formData)
     login(formData);
   });
 

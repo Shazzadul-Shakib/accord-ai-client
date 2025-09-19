@@ -18,10 +18,11 @@ export const useChat = () => {
 
   // get messages
   const { isPending: isChatMessagesLoading, data: chatMessages } = useQuery({
-    queryKey: ["chat", "message"],
-    queryFn: () => chatApi.chatMessages({ roomId: selectedChatId || "" }),
+    queryKey: ["chat", "message", selectedChatId], // Add selectedChatId to queryKey
+    queryFn: () => chatApi.chatMessages({ roomId: selectedChatId as string }),
+    enabled: !!selectedChatId, // Only run query if selectedChatId exists
+    refetchOnWindowFocus: false, // Prevent refetching on window focus
   });
-
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<IMessage[]>([]);
 
@@ -40,11 +41,11 @@ export const useChat = () => {
         text: message,
         sender: {
           _id: "user_id", // This should be replaced with actual user ID
-          name: "User" // This should be replaced with actual user name
+          name: "User", // This should be replaced with actual user name
         },
         roomId: selectedChatId,
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       };
       setMessages([...messages, newMessage]);
       setMessage("");

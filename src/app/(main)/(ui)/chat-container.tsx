@@ -49,7 +49,7 @@ const ChatContaineer: React.FC = () => {
     >
       {/* Chat Header */}
       <div className="border-border bg-secondary border-b p-4.5 sm:px-6 sm:py-3">
-        <div className="mx-auto flex max-w-6xl items-center justify-between">
+        <div className="mx-auto flex max-w-6xl items-center justify-between lg:max-w-3/4">
           <div className="flex items-center gap-2">
             <button
               onClick={() => window.history.back()}
@@ -57,7 +57,9 @@ const ChatContaineer: React.FC = () => {
             >
               <ArrowLeft className="h-4 w-4" />
             </button>
-            <h2 className="text-base font-semibold text-primary sm:text-lg">{chatTopic}</h2>
+            <h2 className="text-primary text-base font-semibold sm:text-lg">
+              {chatTopic}
+            </h2>
           </div>
           <div className="flex items-center gap-3">
             <div>

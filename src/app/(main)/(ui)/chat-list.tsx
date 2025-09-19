@@ -1,10 +1,11 @@
-"use client"
+"use client";
 
 import { IChat } from "../(lib)/sidebar-types";
 import { useSidebar } from "../(lib)/useSidebar";
 
 const ChatList: React.FC<{ chat: IChat }> = ({ chat }) => {
-    const { selectedChatId, handleChatSelect } = useSidebar();
+  const { selectedChatId, handleChatSelect } = useSidebar();
+  console.log(chat);
   return (
     <div
       key={chat.roomId}
@@ -18,7 +19,7 @@ const ChatList: React.FC<{ chat: IChat }> = ({ chat }) => {
       <div className="flex items-center gap-4 p-3">
         <div className="from-primary/20 to-primary/10 ring-primary/5 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br shadow-sm ring-1">
           <span className="text-primary text-lg font-medium">
-            {chat.topicTitle.charAt(0).toUpperCase()}
+            {chat?.topicTitle?.charAt(0).toUpperCase()}
           </span>
         </div>
         <div className="min-w-0 flex-1">

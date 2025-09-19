@@ -6,7 +6,7 @@ import { chatApi } from "@/tanstack/api-services/chatApi";
 import { toast } from "sonner";
 import { TErrorResponse } from "@/app/(auth)/login/(lib)/loginSchema";
 
-export const useAddTopicRequest = () => {
+export const useAddTopicRequest = (options?: { onSuccess?: () => void }) => {
   const form = useForm<TAddTopicRequest>({
     resolver: zodResolver(topicRequestSchema),
     defaultValues: {
@@ -21,6 +21,7 @@ export const useAddTopicRequest = () => {
       onSuccess: (data) => {
         toast.success(data.message || "Topic Request Creation Successful");
         console.log(data);
+        options?.onSuccess?.();
       },
       onError: (error: TErrorResponse) => {
         toast.error(
