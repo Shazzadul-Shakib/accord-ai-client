@@ -27,7 +27,9 @@ const ChatList: React.FC<{ chat: IChat }> = ({ chat }) => {
             <h3 className="text-primary/90 truncate text-sm font-semibold">
               {chat.topicTitle}
             </h3>
-            <p className="text-muted/60 text-xs font-medium">
+            <p
+              className={`text-muted/60 text-xs font-medium ${!chat.lastMessage && "hidden"}`}
+            >
               {(() => {
                 const date = new Date(chat.lastMessageTime);
                 const now = new Date();
