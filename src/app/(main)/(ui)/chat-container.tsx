@@ -23,8 +23,7 @@ import NotSelectedChat from "./not-selected-chat";
 import { useChat } from "../(lib)/useChat";
 import { useProfile } from "../profile/(lib)/useProfile";
 import MessageBox from "./message-box";
-
-
+import MessageBoxSkeleton from "./skeletonss/message-box-skeleton";
 
 const ChatContaineer: React.FC = () => {
   const {
@@ -33,7 +32,8 @@ const ChatContaineer: React.FC = () => {
     message,
     messages,
     setMessage,
-
+    isChatMessagesLoading,
+    chatTopic,
   } = useChat();
   const { loggedUser } = useProfile();
   const user = loggedUser?.data?._id;
@@ -57,9 +57,7 @@ const ChatContaineer: React.FC = () => {
             >
               <ArrowLeft className="h-4 w-4" />
             </button>
-            <h2 className="text-base font-semibold sm:text-lg">
-              Chat {selectedChatId}
-            </h2>
+            <h2 className="text-base font-semibold text-primary sm:text-lg">{chatTopic}</h2>
           </div>
           <div className="flex items-center gap-3">
             <div>
@@ -105,9 +103,18 @@ const ChatContaineer: React.FC = () => {
       {/* Chat Messages Area */}
       <div className="flex flex-1 flex-col-reverse overflow-y-auto p-2 sm:p-4">
         <div className="mx-auto w-[92%] max-w-6xl space-y-6 sm:space-y-4">
-          {messages.map((msg) => (
-            <MessageBox key={msg._id} msg={msg} user={user}/>
-          ))}
+          {isChatMessagesLoading ? (
+            <div className="w-full">
+              <MessageBoxSkeleton className="mr-auto" position="left" />
+              <MessageBoxSkeleton className="ml-auto" position="right" />
+              <MessageBoxSkeleton className="mr-auto" position="left" />
+              <MessageBoxSkeleton className="ml-auto" position="right" />
+            </div>
+          ) : (
+            messages.map((msg) => (
+              <MessageBox key={msg._id} msg={msg} user={user} />
+            ))
+          )}
         </div>
       </div>
 

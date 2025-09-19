@@ -15,8 +15,19 @@ const loggedUser = async () => {
   return apiService.get("/user/logged-user");
 };
 
+const allUsers = async () => {
+  return apiService.get("/user");
+};
+
 const updateUser = async (data:object) => {
   return apiService.patch("/user/update-profile",data);
 };
 
-export const authApi = { loginUser, logoutUser, registerUser, loggedUser, updateUser };
+export const authApi = {
+  loginUser,
+  logoutUser,
+  registerUser,
+  loggedUser,
+  updateUser,
+  allUsers,
+};

@@ -3,18 +3,24 @@ import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { IMessage } from "./chat-types";
+import { useSidebar } from "./useSidebar";
+import { IChat } from "./sidebar-types";
 
 export const useChat = () => {
   const searchParams = useSearchParams();
   const selectedChatId = searchParams.get("chat");
+  const { chatList } = useSidebar();
+  const chats = chatList?.data;
+
+  const chatTopic = chats?.find(
+    (chat: IChat) => chat.roomId === selectedChatId,
+  )?.topicTitle;
 
   // get messages
   const { isPending: isChatMessagesLoading, data: chatMessages } = useQuery({
     queryKey: ["chat", "message"],
     queryFn: () => chatApi.chatMessages({ roomId: selectedChatId || "" }),
   });
-
-  console.log(chatMessages);
 
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<IMessage[]>([]);
@@ -54,5 +60,6 @@ export const useChat = () => {
     selectedChatId,
     chatMessages,
     isChatMessagesLoading,
+    chatTopic,
   };
 };

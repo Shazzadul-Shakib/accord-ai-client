@@ -1,3 +1,4 @@
+import { authApi } from "@/tanstack/api-services/authApi";
 import { chatApi } from "@/tanstack/api-services/chatApi";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -17,6 +18,15 @@ export const useSidebar = () => {
     queryFn: chatApi.chatList,
   });
 
+  // get all users
+  const {
+    isPending: isAllUsersLoading,
+    data: allUsers,
+  } = useQuery({
+    queryKey: ["users","user"],
+    queryFn: authApi.allUsers,
+  });
+
   const handleChatSelect = (chatId: string) => {
     router.push(`?chat=${chatId}`);
   };
@@ -28,5 +38,7 @@ export const useSidebar = () => {
     chatListError,
     handleChatSelect,
     selectedChatId,
+    allUsers,
+    isAllUsersLoading,
   };
 };

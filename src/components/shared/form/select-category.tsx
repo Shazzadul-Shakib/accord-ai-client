@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface User {
-  id: string;
+  _id: string;
   name: string;
   image: string;
 }
@@ -52,7 +52,7 @@ export const SelectUsers = ({
       render={({ field }) => {
         const selectedValues = field.value || defaultValue || [];
         const selectedUsers = users.filter((user) =>
-          selectedValues.includes(user.id),
+          selectedValues.includes(user._id),
         );
 
         const filteredUsers = users.filter((user) =>
@@ -114,15 +114,15 @@ export const SelectUsers = ({
                       <div className="p-2">
                         {filteredUsers.map((user) => (
                           <div
-                            key={user.id}
+                            key={user._id}
                             className="hover:bg-border flex cursor-pointer items-center justify-between rounded-md p-2"
-                            onClick={() => handleSelect(user.id)}
+                            onClick={() => handleSelect(user._id)}
                           >
                             <div className="flex items-center gap-3">
                               <div className="relative">
                                 <Avatar className="h-10 w-10">
                                   <AvatarImage
-                                    src={user.image}
+                                    src={user.image || "/user.jpg"}
                                     alt={user.name}
                                   />
                                   <AvatarFallback className="text-sm">
@@ -142,7 +142,7 @@ export const SelectUsers = ({
                             <Check
                               className={cn(
                                 "h-4 w-4",
-                                selectedValues.includes(user.id)
+                                selectedValues.includes(user._id)
                                   ? "opacity-100"
                                   : "opacity-0",
                               )}
@@ -160,7 +160,7 @@ export const SelectUsers = ({
                 <div className="flex flex-wrap gap-1">
                   {selectedUsers.map((user) => (
                     <Badge
-                      key={user.id}
+                      key={user._id}
                       variant="secondary"
                       className="text-mute flex items-center gap-1 pr-1 pl-2"
                     >
@@ -181,7 +181,7 @@ export const SelectUsers = ({
                         className="hover:text-mute h-4 w-4 p-0 text-red-500"
                         onClick={(e) => {
                           e.preventDefault();
-                          handleRemove(user.id);
+                          handleRemove(user._id);
                         }}
                       >
                         <X className="h-3 w-3" />

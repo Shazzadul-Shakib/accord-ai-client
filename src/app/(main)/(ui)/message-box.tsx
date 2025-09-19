@@ -18,7 +18,7 @@ const MessageBox: React.FC<{ msg: IMessage; user: string }> = ({
         msg.sender._id === user ? "justify-end" : "justify-start"
       }`}
     >
-      <div className="group relative max-w-[85%] sm:max-w-[75%]">
+      <div className="group relative max-w-[85%] min-w-[25%] sm:max-w-[75%]">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button

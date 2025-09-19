@@ -9,3 +9,8 @@ export interface IMessage {
   updatedAt: string;
   _id: string;
 }
+
+export interface MessageBoxSkeletonProps {
+  className?: string;
+  position?: "left" | "right";
+}
