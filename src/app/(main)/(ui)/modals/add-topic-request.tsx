@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { TextInput } from "@/components/shared/form/text-input";
 import { Button } from "@/components/ui/button";
@@ -6,11 +6,12 @@ import * as customForm from "@/components/ui/form";
 import { useAddTopicRequest } from "../../(lib)/useAddTopicRequest";
 import { SelectUsers } from "@/components/shared/form/select-category";
 import { useSidebar } from "../../(lib)/useSidebar";
-
+import { ButtonLoader } from "@/components/shared/loader/button-loader";
 
 const AddTopicRequest: React.FC = () => {
   const { isAllUsersLoading, allUsers } = useSidebar();
-  const { form, onRequest } = useAddTopicRequest();
+  const { form, onRequest, addTopicRequest, isAddTopicRequestLoading } =
+    useAddTopicRequest();
   const users = allUsers.data;
   return (
     <customForm.Form {...form}>
@@ -31,8 +32,11 @@ const AddTopicRequest: React.FC = () => {
         />
 
         <Button type="submit" className="mt-2 w-full cursor-pointer">
-          {/* {isLoading ? "Logging in..." : "Login"} */}
-          Save
+          {isAddTopicRequestLoading ? (
+            <ButtonLoader text="Creating" />
+          ) : (
+            "Create"
+          )}
         </Button>
       </form>
     </customForm.Form>

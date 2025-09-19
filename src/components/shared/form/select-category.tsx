@@ -165,7 +165,10 @@ export const SelectUsers = ({
                       className="text-mute flex items-center gap-1 pr-1 pl-2"
                     >
                       <Avatar className="h-4 w-4">
-                        <AvatarImage src={user.image} alt={user.name} />
+                        <AvatarImage
+                          src={user.image || "/user.jpg"}
+                          alt={user.name}
+                        />
                         <AvatarFallback className="text-xs">
                           {user.name
                             .split(" ")
