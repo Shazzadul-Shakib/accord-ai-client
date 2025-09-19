@@ -6,6 +6,7 @@ export interface IChat {
 }
 export interface INotification {
   id: string;
+  topicId:string,
   title: string;
   description: string;
   time: string;

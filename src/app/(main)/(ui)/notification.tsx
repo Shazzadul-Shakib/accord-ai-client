@@ -13,7 +13,12 @@ import { NotificationListSkeleton } from "./skeletonss/notification-list-skeleto
 import { INotification } from "../(lib)/sidebar-types";
 
 const Notification: FC = () => {
-  const { isNotificationLoading, notifications } = useSidebar();
+  const {
+    isNotificationLoading,
+    notifications,
+    handleNotificationRequest,
+    handleDeleteNotification,
+  } = useSidebar();
 
   return (
     <div className="relative mt-2">
@@ -23,11 +28,7 @@ const Notification: FC = () => {
           {/* Notification badge */}
           <div className="bg-primary absolute -top-1.5 right-1 flex h-4 w-4 items-center justify-center rounded-full">
             <span className="text-primary-foreground text-[9px]">
-              {isNotificationLoading ? (
-                "..."
-              ) : (
-                notifications.data.length
-              )}
+              {isNotificationLoading ? "..." : notifications.data.length}
             </span>
           </div>
         </DropdownMenuTrigger>
@@ -42,41 +43,19 @@ const Notification: FC = () => {
             <NotificationListSkeleton />
           ) : (
             notifications?.data?.map((notification: INotification) => (
-              <div key={notification.id}>
+              <div key={notification.id} className="flex items-center">
                 <customDialog.Dialog>
                   <customDialog.DialogTrigger asChild>
-                    <DropdownMenuItem
-                      className="hover:bg-border focus:bg-border cursor-pointer rounded-md p-2"
-                      onSelect={(e) => e.preventDefault()}
-                    >
-                      <div className="flex w-full items-center justify-between">
-                        <div className="flex flex-col gap-1">
-                          <div className="text-muted text-xs">
-                            {notification.description}
-                          </div>
-                          <div className="text-muted-foreground text-xs">
-                            {notification.time}
-                          </div>
+                    <div className="hover:bg-border focus:bg-border flex-1 cursor-pointer rounded-md p-2">
+                      <div className="flex flex-col gap-1">
+                        <div className="text-muted text-xs">
+                          {notification.description}
                         </div>
-
-                        <DropdownMenu>
-                          <DropdownMenuTrigger className="focus:outline-none">
-                            <div className="hover:bg-border rounded-md p-1 cursor-pointer">
-                              <MoreVertical className="h-6 w-6" />
-                            </div>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent
-                            align="end"
-                            className="bg-secondary text-muted"
-                          >
-                            <DropdownMenuItem className="focus:bg-destructive/20 focus:text-muted/80 cursor-pointer text-sm">
-                              <Trash className="text-muted h-4 w-4" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        <div className="text-muted-foreground text-xs">
+                          {notification.time}
+                        </div>
                       </div>
-                    </DropdownMenuItem>
+                    </div>
                   </customDialog.DialogTrigger>
                   <customDialog.DialogContent>
                     <customDialog.DialogHeader>
@@ -88,15 +67,55 @@ const Notification: FC = () => {
                       </customDialog.DialogDescription>
                     </customDialog.DialogHeader>
                     <div className="flex justify-end gap-2">
-                      <button className="bg-destructive text-destructive-foreground rounded-md px-4 py-2 text-sm">
+                      <button
+                        onClick={() =>
+                          handleNotificationRequest({
+                            topicRequestId: notification.topicId,
+                            res: { status: "rejected" },
+                          })
+                        }
+                        className="bg-destructive text-destructive-foreground cursor-pointer rounded-md px-4 py-2 text-sm"
+                      >
                         Reject
                       </button>
-                      <button className="bg-primary text-primary-foreground rounded-md px-4 py-2 text-sm">
+                      <button
+                        onClick={() =>
+                          handleNotificationRequest({
+                            topicRequestId: notification.topicId,
+                            res: { status: "accepted" },
+                          })
+                        }
+                        className="bg-primary text-primary-foreground cursor-pointer rounded-md px-4 py-2 text-sm"
+                      >
                         Accept
                       </button>
                     </div>
                   </customDialog.DialogContent>
                 </customDialog.Dialog>
+
+                <div className="ml-2">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger className="focus:outline-none">
+                      <div className="hover:bg-border text-muted/50 cursor-pointer rounded-md p-1">
+                        <MoreVertical className="h-6 w-6" />
+                      </div>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      align="end"
+                      className="bg-secondary text-muted"
+                    >
+                      <DropdownMenuItem
+                        onClick={() =>
+                          handleDeleteNotification(notification.id)
+                        }
+                        className="focus:bg-destructive/20 focus:text-muted/80 cursor-pointer text-sm"
+                      >
+                        <Trash className="text-muted h-4 w-4" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </div>
             ))
           )}
