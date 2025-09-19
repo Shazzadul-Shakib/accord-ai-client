@@ -37,7 +37,7 @@ export const useSidebar = (options?: { onSuccess?: () => void }) => {
   });
 
   const handleChatSelect = (chatId: string) => {
-    router.push(`?chat=${chatId}`);
+    router.push(`/?chat=${chatId}`);
   };
 
   // response topic request notification
