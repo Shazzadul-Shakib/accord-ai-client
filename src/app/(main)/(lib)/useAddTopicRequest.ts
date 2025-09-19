@@ -20,7 +20,6 @@ export const useAddTopicRequest = (options?: { onSuccess?: () => void }) => {
       mutationFn: chatApi.addTopicRequest,
       onSuccess: (data) => {
         toast.success(data.message || "Topic Request Creation Successful");
-        console.log(data);
         options?.onSuccess?.();
       },
       onError: (error: TErrorResponse) => {

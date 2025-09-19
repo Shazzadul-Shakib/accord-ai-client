@@ -6,7 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
-export const useSidebar = () => {
+export const useSidebar = (options?: { onSuccess?: () => void }) => {
   const router = useRouter();
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
@@ -50,6 +50,7 @@ export const useSidebar = () => {
           queryKey: ["notification"],
           refetchType: "active",
         });
+        options?.onSuccess?.();
       },
       onError: (error: TErrorResponse) => {
         toast.error(error.data.message);

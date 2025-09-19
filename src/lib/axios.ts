@@ -30,6 +30,7 @@ apiClient.interceptors.request.use(
   },
 );
 
+
 // Response interceptor for refresh logic
 apiClient.interceptors.response.use(
   (res) => res,
@@ -46,6 +47,10 @@ apiClient.interceptors.response.use(
 
     // 2️⃣ Handle 401 errors for protected routes
     if (error.response?.status === 401 && !originalRequest._retry) {
+      const hasRefresh = document.cookie.includes("refreshToken=");
+      if (!hasRefresh) {
+        return Promise.reject(error); // don't try refreshing if no refresh token
+      }
       originalRequest._retry = true;
 
       try {

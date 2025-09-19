@@ -1,5 +1,6 @@
 "use client";
-import { FC } from "react";
+
+import { FC, useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,12 +14,14 @@ import { NotificationListSkeleton } from "./skeletonss/notification-list-skeleto
 import { INotification } from "../(lib)/sidebar-types";
 
 const Notification: FC = () => {
+  const [openId, setOpenId] = useState<string | null>(null);
+
   const {
     isNotificationLoading,
     notifications,
     handleNotificationRequest,
     handleDeleteNotification,
-  } = useSidebar();
+  } = useSidebar({ onSuccess: () => setOpenId(null) });
 
   return (
     <div className="relative mt-2">
@@ -44,7 +47,12 @@ const Notification: FC = () => {
           ) : (
             notifications?.data?.map((notification: INotification) => (
               <div key={notification.id} className="flex items-center">
-                <customDialog.Dialog>
+                <customDialog.Dialog
+                  open={openId === notification.id}
+                  onOpenChange={(open) =>
+                    setOpenId(open ? notification.id : null)
+                  }
+                >
                   <customDialog.DialogTrigger asChild>
                     <div className="hover:bg-border focus:bg-border flex-1 cursor-pointer rounded-md p-2">
                       <div className="flex flex-col gap-1">

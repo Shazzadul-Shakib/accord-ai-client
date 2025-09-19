@@ -2,20 +2,8 @@
 
 import { usePathname } from "next/navigation";
 import { Concert_One } from "next/font/google";
-import {
-  Bell,
-  MessageSquareDot,
-  MoreVertical,
-  PlusSquare,
-  Search,
-  Trash,
-} from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { MessageSquareDot, PlusSquare, Search } from "lucide-react";
+
 import * as customDialog from "@/components/ui/dialog";
 import AddTopicRequest from "./modals/add-topic-request";
 import Profile from "./profile/profile";
