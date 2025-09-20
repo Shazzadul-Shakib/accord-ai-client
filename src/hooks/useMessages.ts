@@ -1,4 +1,3 @@
-// hooks/useMessage.ts
 import { IMessage } from "@/app/(main)/(lib)/chat-types";
 import { useSocket } from "@/providers/socket-provider";
 import { useEffect, useRef, useState } from "react";
@@ -100,7 +99,7 @@ export const useMessage = (): UseMessageReturn => {
 
     // Register event listeners
     socket.on("room_message", handleRoomMessage);
-    socket.on("send_message", handleRoomMessage); // Also listen to send_message for topic rooms
+    socket.on("send_message", handleRoomMessage);
     socket.on("message_sent", handleMessageSent);
     socket.on("user_typing", handleUserTyping);
     socket.on("error_message", handleErrorMessage);
