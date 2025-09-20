@@ -23,6 +23,8 @@ const Notification: FC = () => {
     handleDeleteNotification,
   } = useSidebar({ onSuccess: () => setOpenId(null) });
 
+  console.log(notifications);
+
   return (
     <div className="relative mt-2">
       <DropdownMenu>
@@ -44,6 +46,10 @@ const Notification: FC = () => {
           </div>
           {isNotificationLoading ? (
             <NotificationListSkeleton />
+          ) : notifications.data.length === 0 ? (
+            <div className="text-muted-foreground flex items-center justify-center p-4 text-sm">
+              No notifications
+            </div>
           ) : (
             notifications?.data?.map((notification: INotification) => (
               <div key={notification.id} className="flex items-center">
@@ -68,36 +74,53 @@ const Notification: FC = () => {
                   <customDialog.DialogContent>
                     <customDialog.DialogHeader>
                       <customDialog.DialogTitle>
-                        {notification.title}
+                        {notification.hasResponse ? (
+                          <div className="flex items-center gap-2">
+                            {notification.title}
+                            <span className="text-primary text-sm">
+                              (Already Responded)
+                            </span>
+                          </div>
+                        ) : (
+                          notification.title
+                        )}
                       </customDialog.DialogTitle>
                       <customDialog.DialogDescription>
                         {notification.description}
                       </customDialog.DialogDescription>
                     </customDialog.DialogHeader>
-                    <div className="flex justify-end gap-2">
-                      <button
-                        onClick={() =>
-                          handleNotificationRequest({
-                            topicRequestId: notification.topicId,
-                            res: { status: "rejected" },
-                          })
-                        }
-                        className="bg-destructive text-destructive-foreground cursor-pointer rounded-md px-4 py-2 text-sm"
-                      >
-                        Reject
-                      </button>
-                      <button
-                        onClick={() =>
-                          handleNotificationRequest({
-                            topicRequestId: notification.topicId,
-                            res: { status: "accepted" },
-                          })
-                        }
-                        className="bg-primary text-primary-foreground cursor-pointer rounded-md px-4 py-2 text-sm"
-                      >
-                        Accept
-                      </button>
-                    </div>
+                    {!notification.hasResponse && (
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() =>
+                            handleNotificationRequest({
+                              topicRequestId: notification.topicId,
+                              res: {
+                                status: "rejected",
+                                notificationId: notification.id,
+                              },
+                            })
+                          }
+                          className="bg-destructive text-destructive-foreground cursor-pointer rounded-md px-4 py-2 text-sm"
+                        >
+                          Reject
+                        </button>
+                        <button
+                          onClick={() =>
+                            handleNotificationRequest({
+                              topicRequestId: notification.topicId,
+                              res: {
+                                status: "accepted",
+                                notificationId: notification.id,
+                              },
+                            })
+                          }
+                          className="bg-primary text-primary-foreground cursor-pointer rounded-md px-4 py-2 text-sm"
+                        >
+                          Accept
+                        </button>
+                      </div>
+                    )}
                   </customDialog.DialogContent>
                 </customDialog.Dialog>
 

@@ -47,6 +47,12 @@ export const useChat = () => {
     refetchInterval: 3000,
   });
 
+  const { isPending: isSummaryLoading, data: chatSummary } = useQuery({
+    queryKey: ["summary", selectedChatId],
+    queryFn: () => chatApi.getSummary({ roomId: selectedChatId as string }),
+    enabled: !!selectedChatId,
+  });
+
   const { mutate: deleteMessage, isPending: isMessageDeleting } = useMutation({
     mutationFn: chatApi.deleteMessage,
     onSuccess: (data) => {
@@ -252,6 +258,8 @@ export const useChat = () => {
     chatTopic,
     handleDeleteMessage,
     isMessageDeleting,
+    chatSummary,
+    isSummaryLoading,
 
     // Socket status
     isConnected,

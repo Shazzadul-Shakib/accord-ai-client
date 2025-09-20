@@ -181,7 +181,6 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         });
 
         newSocket.on("connect_error", (error) => {
-          console.error("Connection error:", error.message);
           setIsConnected(false);
           isConnectingRef.current = false;
           clearTimeout(connectionTimeoutRef.current);

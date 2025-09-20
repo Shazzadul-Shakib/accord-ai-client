@@ -20,6 +20,7 @@ export const useSidebar = (options?: { onSuccess?: () => void }) => {
   } = useQuery({
     queryKey: ["chat"],
     queryFn: chatApi.chatList,
+    refetchInterval:3000
   });
 
   // get all users
@@ -34,6 +35,7 @@ export const useSidebar = (options?: { onSuccess?: () => void }) => {
     queryFn: notificationApi.getNotifications,
     staleTime: 0, // Consider data stale immediately
     refetchOnWindowFocus: true, // Refetch when window gains focus
+    refetchInterval: 3000,
   });
 
   const handleChatSelect = (chatId: string) => {

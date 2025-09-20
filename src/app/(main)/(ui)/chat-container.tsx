@@ -1,21 +1,7 @@
 "use client";
 
-import {
-  ArrowLeft,
-  Edit,
-  MoreVertical,
-  SendIcon,
-  Trash,
-  WandSparkles,
-  Wifi,
-  WifiOff,
-} from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { ArrowLeft, SendIcon, WandSparkles, Wifi, WifiOff } from "lucide-react";
+
 import {
   Tooltip,
   TooltipContent,
@@ -29,6 +15,14 @@ import MessageBoxSkeleton from "./skeletonss/message-box-skeleton";
 import { useRouter } from "next/navigation";
 import TypingIndicator from "./typing-indicator";
 import { useEffect, useRef } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 const ChatContainer: React.FC = () => {
   const {
@@ -43,6 +37,8 @@ const ChatContainer: React.FC = () => {
     typingUsers,
     isTyping,
     isMessageDeleting,
+    isSummaryLoading,
+    chatSummary,
   } = useChat();
   const router = useRouter();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -61,6 +57,7 @@ const ChatContainer: React.FC = () => {
   if (!selectedChatId) {
     return <NotSelectedChat selectedChatId={selectedChatId as string} />;
   }
+  const summary = chatSummary?.data?.summary;
 
   return (
     <div
@@ -107,22 +104,78 @@ const ChatContainer: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            <div>
-              <Tooltip>
-                <TooltipTrigger
-                  onClick={() => {
-                    /* Add AI summary generation logic */
-                  }}
-                  className="bg-primary flex cursor-pointer items-center rounded-md px-2 py-1.5 sm:px-3 sm:text-sm"
-                >
-                  <WandSparkles className="h-4 w-4 sm:h-6 sm:w-6" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Generate Summary</p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
-            <div>
+            <Dialog>
+              <DialogTrigger asChild>
+                <div>
+                  <Tooltip>
+                    <TooltipTrigger className="bg-primary flex cursor-pointer items-center rounded-md px-2 py-1.5 sm:px-3 sm:text-sm">
+                      <WandSparkles className="h-4 w-4 sm:h-6 sm:w-6" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Generate Summary</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle> AI Generated Chat Summary</DialogTitle>
+                  <DialogDescription></DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  {isSummaryLoading ? (
+                    <div className="animate-pulse space-y-3">
+                      <div className="bg-border h-4 w-3/4 rounded"></div>
+                      <div className="bg-border h-4 w-1/2 rounded"></div>
+                    </div>
+                  ) : summary ? (
+                    <>
+                      <div className="space-y-2">
+                        <h3 className="font-medium">Title</h3>
+                        <p className="text-muted-foreground text-sm">
+                          {summary.title}
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <h3 className="font-medium">Description</h3>
+                        <p className="text-muted-foreground text-sm">
+                          {summary.description}
+                        </p>
+                      </div>
+                      {summary.conclusions?.length > 0 && (
+                        <div className="space-y-2">
+                          <h3 className="font-medium">Key Conclusions</h3>
+                          <ul className="text-muted-foreground list-inside list-disc text-sm">
+                            {summary.conclusions.map(
+                              (conclusion: string, index: number) => (
+                                <li key={index}>{conclusion}</li>
+                              ),
+                            )}
+                          </ul>
+                        </div>
+                      )}
+                      {summary.points?.length > 0 && (
+                        <div className="space-y-2">
+                          <h3 className="font-medium">Key Points</h3>
+                          <ul className="text-muted-foreground list-inside list-disc text-sm">
+                            {summary.points.map(
+                              (point: { event: string }, index: number) => (
+                                <li key={index}>{point.event}</li>
+                              ),
+                            )}
+                          </ul>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-muted-foreground text-sm">
+                      No summary available
+                    </p>
+                  )}
+                </div>
+              </DialogContent>
+            </Dialog>
+            {/* <div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
@@ -142,7 +195,7 @@ const ChatContainer: React.FC = () => {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

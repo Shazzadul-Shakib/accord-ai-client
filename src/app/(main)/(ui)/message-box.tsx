@@ -38,10 +38,6 @@ const MessageBox: React.FC<{ msg: IMessage; user: string }> = ({
             align={msg.sender._id === user ? "start" : "end"}
             className="bg-secondary text-muted/90"
           >
-            <DropdownMenuItem className="hover:bg-border focus:bg-border focus:text-muted/80 cursor-pointer text-xs sm:text-sm">
-              <Edit className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-              Edit
-            </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() =>
                 handleDeleteMessage({ messageId: msg._id as string })

@@ -22,9 +22,14 @@ const deleteMessage = async ({
   return apiService.delete(`/message/${roomId}/${messageId}`);
 };
 
+const getSummary = async ({ roomId }: { roomId: string }) => {
+  return apiService.get(`/room/${roomId}/summary`);
+};
+
 export const chatApi = {
   chatList,
   chatMessages,
   addTopicRequest,
   deleteMessage,
+  getSummary,
 };
