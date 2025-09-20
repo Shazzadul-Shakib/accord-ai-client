@@ -7,6 +7,7 @@ import { useAddTopicRequest } from "../../(lib)/useAddTopicRequest";
 import { SelectUsers } from "@/components/shared/form/select-category";
 import { useSidebar } from "../../(lib)/useSidebar";
 import { ButtonLoader } from "@/components/shared/loader/button-loader";
+import { useOnlineUsers } from "@/hooks/useOnlineUsers";
 
 interface OptionProps {
   onSuccess?: () => void;
@@ -14,6 +15,8 @@ interface OptionProps {
 
 const AddTopicRequest: React.FC<OptionProps> = ({ onSuccess }) => {
   const { isAllUsersLoading, allUsers } = useSidebar();
+  const { onlineUsers } = useOnlineUsers();
+  
   const { form, onRequest, isAddTopicRequestLoading } = useAddTopicRequest({
     onSuccess,
   });
@@ -34,6 +37,7 @@ const AddTopicRequest: React.FC<OptionProps> = ({ onSuccess }) => {
           placeholder="Select members"
           users={users}
           loading={isAllUsersLoading}
+          onlineUsers={onlineUsers}
         />
 
         <Button type="submit" className="mt-2 w-full cursor-pointer">

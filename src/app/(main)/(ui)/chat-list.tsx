@@ -5,6 +5,7 @@ import { useSidebar } from "../(lib)/useSidebar";
 
 const ChatList: React.FC<{ chat: IChat }> = ({ chat }) => {
   const { selectedChatId, handleChatSelect } = useSidebar();
+
   return (
     <div
       key={chat.roomId}

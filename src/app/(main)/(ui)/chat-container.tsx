@@ -48,8 +48,8 @@ const ChatContaineer: React.FC = () => {
       } bg-background flex h-full flex-col`}
     >
       {/* Chat Header */}
-      <div className="border-border bg-secondary border-b p-4.5 sm:px-6 sm:py-3">
-        <div className="mx-auto flex max-w-6xl items-center justify-between lg:max-w-3/4">
+      <div className="border-border bg-secondary border-b p-4.5 sm:p-0 sm:py-3">
+        <div className="mx-auto flex w-[92%] max-w-6xl items-center justify-between">
           <div className="flex items-center gap-2">
             <button
               onClick={() => window.history.back()}

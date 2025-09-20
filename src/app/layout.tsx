@@ -3,6 +3,7 @@ import "./globals.css";
 import { Poppins } from "next/font/google";
 import { ReactQueryProvider } from "@/tanstack/provider/tanstackQueryProvider";
 import { Toaster } from "@/components/ui/sonner";
+import { SocketProvider } from "@/providers/socket-provider";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -22,8 +23,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${poppins.className} bg-background`}>
-        <ReactQueryProvider>{children}</ReactQueryProvider>
-        <Toaster position="top-center" />
+        <SocketProvider>
+          <ReactQueryProvider>{children}</ReactQueryProvider>
+          <Toaster position="top-center" />{" "}
+        </SocketProvider>
       </body>
     </html>
   );

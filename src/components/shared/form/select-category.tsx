@@ -20,6 +20,7 @@ interface User {
   _id: string;
   name: string;
   image: string;
+  isOnline: boolean;
 }
 
 interface IProps {
@@ -31,6 +32,7 @@ interface IProps {
   defaultValue?: string[];
   users?: User[];
   loading?: boolean;
+  onlineUsers: string[];
 }
 
 export const SelectUsers = ({
@@ -41,9 +43,20 @@ export const SelectUsers = ({
   defaultValue,
   users = [],
   loading = false,
+  onlineUsers,
 }: IProps) => {
   const [isOpen, setIsOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
+
+  users = users
+    .map((user) => ({
+      ...user,
+      isOnline: onlineUsers.includes(user._id as never),
+    }))
+    .sort((a, b) => {
+      if (a.isOnline === b.isOnline) return 0;
+      return a.isOnline ? -1 : 1;
+    });
 
   return (
     <FormField
@@ -133,7 +146,9 @@ export const SelectUsers = ({
                                       .slice(0, 2)}
                                   </AvatarFallback>
                                 </Avatar>
-                                <span className="absolute right-0 bottom-0 h-3 w-3 rounded-full border-2 border-white bg-green-500"></span>
+                                <span
+                                  className={`absolute right-0 bottom-0 h-3 w-3 rounded-full border-2 border-white ${user.isOnline ? "bg-green-500" : "bg-gray-400"}`}
+                                ></span>
                               </div>
                               <span className="text-sm font-medium">
                                 {user.name}
