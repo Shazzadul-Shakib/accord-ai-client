@@ -73,7 +73,7 @@ const Notification: FC = () => {
                   </customDialog.DialogTrigger>
                   <customDialog.DialogContent>
                     <customDialog.DialogHeader>
-                      <customDialog.DialogTitle>
+                      <customDialog.DialogTitle className=" my-6">
                         {notification.hasResponse ? (
                           <div className="flex items-center gap-2">
                             {notification.title}
