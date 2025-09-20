@@ -113,8 +113,8 @@ const ChatContaineer: React.FC = () => {
               <MessageBoxSkeleton className="ml-auto" position="right" />
             </div>
           ) : (
-            messages.map((msg) => (
-              <MessageBox key={msg._id} msg={msg} user={user} />
+            messages.map((msg, i) => (
+              <MessageBox key={i} msg={msg} user={user} />
             ))
           )}
         </div>
@@ -124,11 +124,14 @@ const ChatContaineer: React.FC = () => {
       <div className="border-border bg-secondary border-t p-2 sm:p-4">
         <div className="mx-auto flex max-w-6xl items-end gap-2 sm:gap-3">
           <textarea
-            value={message}
+            value={message?.text}
             onChange={(e) => {
               e.target.style.height = "auto";
               e.target.style.height = `${e.target.scrollHeight}px`;
-              setMessage(e.target.value);
+              setMessage({
+                text: e.target.value,
+                sender: user,
+              });
             }}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
@@ -144,7 +147,7 @@ const ChatContaineer: React.FC = () => {
           <button
             className="bg-primary text-primary-foreground hover:bg-primary/90 flex h-[36px] items-center gap-1 rounded-lg px-4 transition-colors disabled:opacity-50 sm:h-[40px] sm:gap-2 sm:px-7"
             onClick={handleSendMessage}
-            disabled={!message.trim()}
+            disabled={!message}
           >
             <SendIcon className="h-4 w-4 sm:h-5 sm:w-5" />
           </button>

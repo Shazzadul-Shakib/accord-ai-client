@@ -1,7 +1,5 @@
 "use client";
-
 import { useSocket } from "@/providers/socket-provider";
-
 
 export const useOnlineUsers = () => {
   const { onlineUsers } = useSocket();

@@ -3,11 +3,11 @@ export interface IMessage {
   roomId: string;
   sender: {
     _id: string;
-    name: string;
+    name?: string;
   };
   text: string;
   updatedAt: string;
-  _id: string;
+  _id?: string;
 }
 
 export interface MessageBoxSkeletonProps {

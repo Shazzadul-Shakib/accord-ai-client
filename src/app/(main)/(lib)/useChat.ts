@@ -5,6 +5,10 @@ import { useEffect, useState } from "react";
 import { IMessage } from "./chat-types";
 import { useSidebar } from "./useSidebar";
 import { IChat } from "./sidebar-types";
+type TMessage={
+  text:string;
+  sender:string;
+}
 
 export const useChat = () => {
   const searchParams = useSearchParams();
@@ -23,7 +27,7 @@ export const useChat = () => {
     enabled: !!selectedChatId, // Only run query if selectedChatId exists
     refetchOnWindowFocus: false, // Prevent refetching on window focus
   });
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState< TMessage>();
   const [messages, setMessages] = useState<IMessage[]>([]);
 
   useEffect(() => {
@@ -35,20 +39,16 @@ export const useChat = () => {
   }, [selectedChatId, chatMessages]);
 
   const handleSendMessage = () => {
-    if (message.trim() && selectedChatId) {
+    if (message && selectedChatId) {
       const newMessage = {
-        _id: String(Date.now()), // Temporary ID until server response
-        text: message,
-        sender: {
-          _id: "user_id", // This should be replaced with actual user ID
-          name: "User", // This should be replaced with actual user name
-        },
+        text: message.text,
+        sender:{_id:message.sender},
         roomId: selectedChatId,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
       setMessages([...messages, newMessage]);
-      setMessage("");
+      setMessage({text: "", sender: ""});
     }
   };
 
