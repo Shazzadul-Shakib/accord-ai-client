@@ -18,6 +18,7 @@ export const useLogout = () => {
         "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/"; // Clear token
       toast.success(data.message || "Logout Successful");
       queryClient.removeQueries({ queryKey: ["user"] });
+      queryClient.removeQueries({ queryKey: ["chat"] });
       router.replace("/login");
     },
     onError: (error: TErrorResponse) => {
