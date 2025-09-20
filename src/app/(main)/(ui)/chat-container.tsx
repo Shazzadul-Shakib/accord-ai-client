@@ -42,6 +42,7 @@ const ChatContainer: React.FC = () => {
     isConnected,
     typingUsers,
     isTyping,
+    isMessageDeleting,
   } = useChat();
   const router = useRouter();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -150,7 +151,7 @@ const ChatContainer: React.FC = () => {
       <div className="flex flex-1 flex-col-reverse overflow-y-auto p-2 sm:p-4">
         <div className="mx-auto w-[92%] max-w-6xl space-y-6 sm:space-y-4">
           {/* Messages */}
-          {isChatMessagesLoading ? (
+          {isChatMessagesLoading || isMessageDeleting ? (
             <div className="w-full">
               <MessageBoxSkeleton className="mr-auto" position="left" />
               <MessageBoxSkeleton className="ml-auto" position="right" />

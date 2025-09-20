@@ -1,3 +1,4 @@
+"use client"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -6,11 +7,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { IMessage } from "../(lib)/chat-types";
 import { Edit, MoreVertical, Trash } from "lucide-react";
+import { useChat } from "../(lib)/useChat";
 
 const MessageBox: React.FC<{ msg: IMessage; user: string }> = ({
   msg,
   user,
 }) => {
+  const { handleDeleteMessage }=useChat();
   return (
     <div
       key={msg._id}
@@ -39,7 +42,12 @@ const MessageBox: React.FC<{ msg: IMessage; user: string }> = ({
               <Edit className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
               Edit
             </DropdownMenuItem>
-            <DropdownMenuItem className="hover:bg-destructive/20 focus:bg-destructive/20 focus:text-muted/80 cursor-pointer text-xs sm:text-sm">
+            <DropdownMenuItem
+              onClick={() =>
+                handleDeleteMessage({ messageId: msg._id as string })
+              }
+              className="hover:bg-destructive/20 focus:bg-destructive/20 focus:text-muted/80 cursor-pointer text-xs sm:text-sm"
+            >
               <Trash className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
               Delete
             </DropdownMenuItem>

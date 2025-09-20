@@ -1,5 +1,5 @@
 import { chatApi } from "@/tanstack/api-services/chatApi";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import { IMessage } from "./chat-types";
@@ -7,6 +7,8 @@ import { useSidebar } from "./useSidebar";
 import { IChat } from "./sidebar-types";
 import { useSocket } from "@/providers/socket-provider";
 import { useMessage } from "@/hooks/useMessages";
+import { toast } from "sonner";
+import { TErrorResponse } from "@/app/(auth)/login/(lib)/loginSchema";
 
 type TMessage = {
   text: string;
@@ -19,6 +21,7 @@ export const useChat = () => {
   const { chatList } = useSidebar();
   const { isConnected } = useSocket();
   const chats = chatList?.data;
+  const queryClient = useQueryClient();
 
   // Get chat topic
   const chatTopic = chats?.find(
@@ -41,8 +44,25 @@ export const useChat = () => {
     queryFn: () => chatApi.chatMessages({ roomId: selectedChatId as string }),
     enabled: !!selectedChatId,
     refetchOnWindowFocus: true,
+    refetchInterval: 3000,
   });
 
+  const { mutate: deleteMessage, isPending: isMessageDeleting } = useMutation({
+    mutationFn: chatApi.deleteMessage,
+    onSuccess: (data) => {
+      toast.success(data.message || "Message deletetion Successful");
+      queryClient.resetQueries({
+        queryKey: ["chat", "message", selectedChatId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["chat", "message", selectedChatId],
+      });
+    },
+    onError: (error: TErrorResponse) => {
+      toast.error(error.data.message || "Message deletetion unsuccessful");
+      console.log(error);
+    },
+  });
   const [message, setMessage] = useState<TMessage>({ text: "", sender: "" });
   const [messages, setMessages] = useState<IMessage[]>([]);
   const prevChatIdRef = useRef<string | null>(null);
@@ -119,7 +139,9 @@ export const useChat = () => {
         // Merge new socket messages with existing, avoiding duplicates
         const mergedMessages = [
           ...prev,
-          ...socketMessages.filter((sm) => !prev.some((pm) => pm._id === sm._id)),
+          ...socketMessages.filter(
+            (sm) => !prev.some((pm) => pm._id === sm._id),
+          ),
         ];
         return mergedMessages;
       });
@@ -209,6 +231,10 @@ export const useChat = () => {
     };
   }, [setSocketMessages]);
 
+  const handleDeleteMessage = ({ messageId }: { messageId: string }) => {
+    deleteMessage({ roomId: selectedChatId as string, messageId });
+  };
+
   return {
     // Message state
     setMessage: handleMessageInputChange,
@@ -224,6 +250,8 @@ export const useChat = () => {
     chatMessages,
     isChatMessagesLoading,
     chatTopic,
+    handleDeleteMessage,
+    isMessageDeleting,
 
     // Socket status
     isConnected,
