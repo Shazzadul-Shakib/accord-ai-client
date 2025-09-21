@@ -1,7 +1,12 @@
 import { chatApi } from "@/tanstack/api-services/chatApi";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { IMessage } from "./chat-types";
 import { useSidebar } from "./useSidebar";
 import { IChat } from "./sidebar-types";
@@ -38,43 +43,104 @@ export const useChat = () => {
     setMessages: setSocketMessages,
   } = useMessage();
 
-  // Get messages from API (for initial load)
-  const { isPending: isChatMessagesLoading, data: chatMessages } = useQuery({
+  // Get messages from API (for infinite scroll)
+  const {
+    data: chatMessages,
+    isLoading: isChatMessagesLoading,
+    isFetchingNextPage,
+    fetchNextPage,
+    hasNextPage,
+    refetch: refetchMessages,
+  } = useInfiniteQuery({
     queryKey: ["chat", "message", selectedChatId],
-    queryFn: () => chatApi.chatMessages({ roomId: selectedChatId as string }),
+    queryFn: ({ pageParam }) =>
+      chatApi.chatMessages({
+        roomId: selectedChatId as string,
+        cursor: pageParam,
+      }),
     enabled: !!selectedChatId,
-    refetchOnWindowFocus: true,
-    refetchInterval: 3000,
+    refetchOnWindowFocus: false, // Disable auto-refetch to prevent scroll issues
+    refetchInterval: false, // Use socket for real-time updates instead
+    getNextPageParam: (lastPage) => lastPage?.data?.nextCursor ?? undefined,
+    initialPageParam: "",
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  const { isPending: isSummaryLoading, data: chatSummary } = useQuery({
-    queryKey: ["summary", selectedChatId],
-    queryFn: () => chatApi.getSummary({ roomId: selectedChatId as string }),
-    enabled: !!selectedChatId,
+  // Summary mutation - only called when user clicks
+  const {
+    mutate: generateSummary,
+    isPending: isSummaryLoading,
+    data: chatSummary,
+    reset: resetSummary,
+  } = useMutation({
+    mutationFn: () => chatApi.getSummary({ roomId: selectedChatId as string }),
+    onError: (error: TErrorResponse) => {
+      toast.error(error.data?.message || "Failed to generate summary");
+      console.error("Summary generation error:", error);
+    },
+    onSuccess: () => {
+      toast.success("Summary generated successfully!");
+    },
   });
 
   const { mutate: deleteMessage, isPending: isMessageDeleting } = useMutation({
     mutationFn: chatApi.deleteMessage,
     onSuccess: (data) => {
-      toast.success(data.message || "Message deletetion Successful");
-      queryClient.resetQueries({
-        queryKey: ["chat", "message", selectedChatId],
-      });
+      toast.success(data.message || "Message deletion Successful");
       queryClient.invalidateQueries({
         queryKey: ["chat", "message", selectedChatId],
       });
     },
     onError: (error: TErrorResponse) => {
-      toast.error(error.data.message || "Message deletetion unsuccessful");
+      toast.error(error.data.message || "Message deletion unsuccessful");
       console.log(error);
     },
   });
+
   const [message, setMessage] = useState<TMessage>({ text: "", sender: "" });
-  const [messages, setMessages] = useState<IMessage[]>([]);
   const prevChatIdRef = useRef<string | null>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hasInitializedRef = useRef<boolean>(false);
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Combine and deduplicate messages from API and socket
+  const messages = useMemo(() => {
+    if (!chatMessages?.pages) return { messages: [], nextCursor: "" };
+
+    // Flatten all pages of messages
+    const allApiMessages = chatMessages.pages.flatMap(
+      (page) => page.data.messages,
+    );
+
+    // Create a map for efficient deduplication
+    const messageMap = new Map<string, IMessage>();
+
+    // Add API messages first (older messages)
+    allApiMessages.forEach((msg) => {
+      if (msg._id) {
+        messageMap.set(msg._id, msg);
+      }
+    });
+
+    // Add socket messages (newer messages), replacing any duplicates
+    socketMessages.forEach((msg) => {
+      if (msg._id) {
+        messageMap.set(msg._id, msg);
+      }
+    });
+
+    // Convert back to array and sort by timestamp
+    const combinedMessages = Array.from(messageMap.values()).sort((a, b) => {
+      const timeA = new Date( a.createdAt || 0).getTime();
+      const timeB = new Date( b.createdAt || 0).getTime();
+      return timeA - timeB;
+    });
+
+    return {
+      messages: combinedMessages,
+      nextCursor: chatMessages.pages[0]?.data?.nextCursor || "",
+    };
+  }, [chatMessages, socketMessages]);
 
   // Reset initialization ref on mount
   useEffect(() => {
@@ -89,11 +155,7 @@ export const useChat = () => {
   // Handle room changes and initial message loading
   useEffect(() => {
     if (!selectedChatId) {
-      // Only update state if necessary to avoid unnecessary re-renders
-      if (messages.length > 0 || socketMessages.length > 0) {
-        setMessages([]);
-        setSocketMessages([]);
-      }
+      setSocketMessages([]);
       hasInitializedRef.current = false;
       return;
     }
@@ -105,10 +167,8 @@ export const useChat = () => {
       const joinWithRetry = () => {
         if (isConnected) {
           console.log("🔄 Switching to chat room:", selectedChatId);
-          // Only clear socketMessages if not already empty
-          if (socketMessages.length > 0) {
-            setSocketMessages([]);
-          }
+          // Clear socket messages when switching rooms
+          setSocketMessages([]);
           joinRoom(selectedChatId);
           hasInitializedRef.current = true;
           prevChatIdRef.current = selectedChatId;
@@ -126,38 +186,14 @@ export const useChat = () => {
         clearTimeout(retryTimeoutRef.current);
       }
     };
-  }, [selectedChatId, isConnected]); // Removed joinRoom, setSocketMessages from deps
+  }, [selectedChatId, isConnected, joinRoom, setSocketMessages]);
 
-  // Handle message updates from API
+  // Reset summary when chat changes
   useEffect(() => {
-    if (chatMessages?.data && selectedChatId) {
-      console.log("📚 Loading messages from API");
-      setMessages(chatMessages.data);
-      setSocketMessages(chatMessages.data);
+    if (selectedChatId !== prevChatIdRef.current) {
+      resetSummary();
     }
-  }, [chatMessages, selectedChatId, setSocketMessages]);
-
-  // Handle socket message updates
-  useEffect(() => {
-    if (socketMessages.length > 0 && selectedChatId) {
-      console.log("🔄 Updating messages from socket");
-      setMessages((prev) => {
-        // Merge new socket messages with existing, avoiding duplicates
-        const mergedMessages = [
-          ...prev,
-          ...socketMessages.filter(
-            (sm) => !prev.some((pm) => pm._id === sm._id),
-          ),
-        ];
-        return mergedMessages;
-      });
-    }
-  }, [socketMessages, selectedChatId]);
-
-  // Debug: Log messages state changes
-  useEffect(() => {
-    console.log("📊 Messages state updated:", messages.length);
-  }, [messages]);
+  }, [selectedChatId, resetSummary]);
 
   // Handle sending messages
   const handleSendMessage = () => {
@@ -230,7 +266,6 @@ export const useChat = () => {
       if (retryTimeoutRef.current) {
         clearTimeout(retryTimeoutRef.current);
       }
-      setMessages([]);
       setSocketMessages([]);
       setMessage({ text: "", sender: "" });
       hasInitializedRef.current = false;
@@ -241,10 +276,22 @@ export const useChat = () => {
     deleteMessage({ roomId: selectedChatId as string, messageId });
   };
 
+  // Improved fetchNextPage wrapper
+  const handleFetchNextPage = async () => {
+    if (hasNextPage && !isFetchingNextPage) {
+      try {
+        return await fetchNextPage();
+      } catch (error) {
+        console.error("Error fetching next page:", error);
+        toast.error("Failed to load older messages");
+        throw error;
+      }
+    }
+  };
+
   return {
     // Message state
     setMessage: handleMessageInputChange,
-    setMessages,
     message,
     messages,
 
@@ -253,6 +300,9 @@ export const useChat = () => {
 
     // Chat info
     selectedChatId,
+    isFetchingNextPage,
+    fetchNextPage: handleFetchNextPage,
+    hasNextPage,
     chatMessages,
     isChatMessagesLoading,
     chatTopic,
@@ -267,5 +317,9 @@ export const useChat = () => {
     // Typing indicators
     typingUsers: getTypingUsers(),
     isTyping: getTypingUsers().length > 0,
+
+    // Additional utilities
+    refetchMessages,
+    generateSummary,
   };
 };

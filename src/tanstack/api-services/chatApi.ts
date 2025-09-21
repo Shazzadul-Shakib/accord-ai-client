@@ -4,8 +4,16 @@ const chatList = async () => {
   return apiService.get("/room");
 };
 
-const chatMessages = async ({ roomId }: { roomId: string }) => {
-  return apiService.get(`/room/${roomId}/messages`);
+const chatMessages = async ({
+  roomId,
+  cursor,
+}: {
+  roomId: string;
+  cursor?: string;
+}) => {
+  return apiService.get(`/room/${roomId}/messages`, {
+    cursor,
+  });
 };
 
 const addTopicRequest = async (data: object) => {
