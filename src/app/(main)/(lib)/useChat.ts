@@ -64,11 +64,20 @@ export const useChat = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { isLoading: isSummaryLoading, data: chatSummary } = useQuery({
-    queryKey: ["summary", selectedChatId],
-    queryFn: () => chatApi.getSummary({ roomId: selectedChatId as string }),
-    enabled: Boolean(selectedChatId),
-    staleTime: 1000 * 60,
+  // FIXED: Changed from useQuery to useMutation for manual triggering
+  const {
+    mutate: generateSummary,
+    isPending: isSummaryLoading,
+    data: chatSummary,
+    error: summaryError,
+  } = useMutation({
+    mutationFn: () => chatApi.getSummary({ roomId: selectedChatId as string }),
+    onSuccess: (data) => {
+      toast.success("Summary generated successfully!");
+    },
+    onError: (error: TErrorResponse) => {
+      toast.error(error.data?.message || "Failed to generate summary");
+    },
   });
 
   const { mutate: deleteMessage, isPending: isMessageDeleting } = useMutation({
@@ -136,7 +145,6 @@ export const useChat = () => {
     const currentChatId = selectedChatId;
 
     if (!currentChatId) {
-      // setSocketMessages([]);
       hasInitializedRef.current = false;
       return;
     }
@@ -174,7 +182,6 @@ export const useChat = () => {
       console.warn("Cannot send message: not connected to socket");
       return;
     }
-
 
     sendSocketMessage(selectedChatId, message.sender, message.text);
     setMessage({ text: "", sender: message.sender });
@@ -248,6 +255,15 @@ export const useChat = () => {
     }
   };
 
+  // ADDED: Function to handle summary generation
+  const handleGenerateSummary = () => {
+    if (!selectedChatId) {
+      toast.error("No chat selected");
+      return;
+    }
+    generateSummary();
+  };
+
   return {
     setMessage: handleMessageInputChange,
     message,
@@ -264,6 +280,8 @@ export const useChat = () => {
     isMessageDeleting,
     chatSummary,
     isSummaryLoading,
+    handleGenerateSummary, // NEW: Function to trigger summary generation
+    summaryError, // NEW: Error state for summary
     isConnected,
     typingUsers: getTypingUsers(),
     isTyping: getTypingUsers().length > 0,

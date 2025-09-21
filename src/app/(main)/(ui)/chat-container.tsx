@@ -37,6 +37,7 @@ const ChatContainer: React.FC = () => {
     isTyping,
     isSummaryLoading,
     chatSummary,
+    handleGenerateSummary,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
@@ -48,19 +49,20 @@ const ChatContainer: React.FC = () => {
   const { loggedUser } = useProfile();
   const user = loggedUser?.data?._id;
 
-  // State for managing scroll behavior - Added user scroll intent tracking
+  // State for managing scroll behavior
   const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true);
   const [isUserNearBottom, setIsUserNearBottom] = useState(true);
   const [lastMessageCount, setLastMessageCount] = useState(0);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const [userScrolledUp, setUserScrolledUp] = useState(false); // Track if user intentionally scrolled up
+  const [userScrolledUp, setUserScrolledUp] = useState(false);
   const [scrollPositionBeforeLoad, setScrollPositionBeforeLoad] = useState<{
     scrollTop: number;
     scrollHeight: number;
   } | null>(null);
+  const [lastScrollTop, setLastScrollTop] = useState(0);
 
   // Threshold for determining if user is near bottom (in pixels)
-  const SCROLL_THRESHOLD = 100;
+  const SCROLL_THRESHOLD = 150;
 
   // Check if user is near bottom of chat
   const checkIfNearBottom = useCallback(() => {
@@ -72,7 +74,7 @@ const ChatContainer: React.FC = () => {
     return distanceFromBottom <= SCROLL_THRESHOLD;
   }, []);
 
-  // Improved scroll to bottom function with better reliability
+  // Improved scroll to bottom function
   const scrollToBottom = useCallback(
     (behavior: ScrollBehavior = "smooth", force = false) => {
       const container = containerRef.current;
@@ -81,23 +83,25 @@ const ChatContainer: React.FC = () => {
       if (!container || !bottom) return;
 
       try {
-        // Method 1: Use scrollIntoView on bottom element
+        // Use scrollIntoView on bottom element
         bottom.scrollIntoView({
           behavior,
           block: "end",
           inline: "nearest",
         });
 
-        // Method 2: Fallback - direct scroll to bottom
+        // Fallback for reliability
         if (force || behavior === "instant") {
-          setTimeout(() => {
+          const scrollToMax = () => {
             if (container) {
               container.scrollTop = container.scrollHeight;
             }
-          }, 10);
+          };
+
+          setTimeout(scrollToMax, 10);
+          setTimeout(scrollToMax, 50);
         }
       } catch (error) {
-        // Method 3: Final fallback - simple scroll
         console.warn("ScrollIntoView failed, using fallback:", error);
         container.scrollTop = container.scrollHeight;
       }
@@ -105,23 +109,33 @@ const ChatContainer: React.FC = () => {
     [],
   );
 
-  // Handle scroll events with user intent tracking
+  // Handle scroll events with improved user intent detection
   const handleScroll = useCallback(() => {
     const container = containerRef.current;
     if (!container) return;
 
+    const { scrollTop } = container;
     const nearBottom = checkIfNearBottom();
     const wasNearBottom = isUserNearBottom;
 
-    setIsUserNearBottom(nearBottom);
+    // Detect if user manually scrolled up (not programmatic scroll)
+    const scrolledUp = scrollTop < lastScrollTop && !nearBottom;
+    const scrolledDown = scrollTop > lastScrollTop;
 
-    // Track user scroll intent - if user scrolls away from bottom, they want to view history
-    if (wasNearBottom && !nearBottom && !isInitialLoad) {
+    setIsUserNearBottom(nearBottom);
+    setLastScrollTop(scrollTop);
+
+    // Only set userScrolledUp if it was a significant manual scroll up
+    if (
+      scrolledUp &&
+      !isInitialLoad &&
+      Math.abs(scrollTop - lastScrollTop) > 50
+    ) {
       setUserScrolledUp(true);
     }
 
-    // Reset scroll intent if user returns to bottom
-    if (nearBottom && userScrolledUp) {
+    // Reset scroll intent if user manually scrolls near bottom
+    if (scrolledDown && nearBottom && userScrolledUp) {
       setUserScrolledUp(false);
     }
 
@@ -132,7 +146,6 @@ const ChatContainer: React.FC = () => {
       !isFetchingNextPage &&
       !isInitialLoad
     ) {
-      // Store current scroll position before loading
       setScrollPositionBeforeLoad({
         scrollTop: container.scrollTop,
         scrollHeight: container.scrollHeight,
@@ -147,9 +160,10 @@ const ChatContainer: React.FC = () => {
     isInitialLoad,
     isUserNearBottom,
     userScrolledUp,
+    lastScrollTop,
   ]);
 
-  // Debounced scroll handler for better performance
+  // Debounced scroll handler
   const debouncedHandleScroll = useCallback(debounce(handleScroll, 100), [
     handleScroll,
   ]);
@@ -167,21 +181,18 @@ const ChatContainer: React.FC = () => {
   useEffect(() => {
     const container = containerRef.current;
 
-    // Only restore scroll position if we have stored position and finished loading
     if (!container || !scrollPositionBeforeLoad || isFetchingNextPage) return;
 
-    // Restore scroll position after new messages are loaded
     const restoreScrollPosition = () => {
       if (container && scrollPositionBeforeLoad) {
         const heightDifference =
           container.scrollHeight - scrollPositionBeforeLoad.scrollHeight;
         if (heightDifference > 0) {
-          // Maintain the exact scroll position relative to new content
           const newScrollTop =
             scrollPositionBeforeLoad.scrollTop + heightDifference;
           container.scrollTop = newScrollTop;
+          setLastScrollTop(newScrollTop);
 
-          // Update the isUserNearBottom state based on new position
           const { scrollTop, scrollHeight, clientHeight } = container;
           const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
           setIsUserNearBottom(distanceFromBottom <= SCROLL_THRESHOLD);
@@ -190,7 +201,6 @@ const ChatContainer: React.FC = () => {
       }
     };
 
-    // Use requestAnimationFrame for better timing with DOM updates
     const rafId = requestAnimationFrame(() => {
       restoreScrollPosition();
     });
@@ -203,43 +213,41 @@ const ChatContainer: React.FC = () => {
     if (!isChatMessagesLoading && messages?.messages && isInitialLoad) {
       setIsInitialLoad(false);
       setShouldScrollToBottom(true);
-      // Scroll to bottom immediately on initial load with force
+      setUserScrolledUp(false); // Reset on initial load
       setTimeout(() => scrollToBottom("instant", true), 100);
     }
   }, [isChatMessagesLoading, messages, isInitialLoad, scrollToBottom]);
 
-  // Effect for new messages - Respect user scroll intent
+  // FIXED: Enhanced effect for new messages with better auto-scroll logic
   useEffect(() => {
-    if (!messages?.messages || isFetchingNextPage) return;
+    if (!messages?.messages || isFetchingNextPage || isInitialLoad) return;
 
     const currentMessageCount = messages.messages.length;
 
-    // Check if new messages were added (not from loading older messages)
-    if (
-      currentMessageCount > lastMessageCount &&
-      !isInitialLoad &&
-      !isFetchingNextPage
-    ) {
+    // Only process if we have new messages (not from loading older messages)
+    if (currentMessageCount > lastMessageCount) {
       const newMessagesCount = currentMessageCount - lastMessageCount;
       const latestMessages = messages.messages.slice(-newMessagesCount);
 
-      // Check if any of the new messages are from the current user
+      // Check if any new message is from current user
       const hasUserMessage = latestMessages.some((msg) => msg.sender === user);
 
-      // Auto-scroll logic with better UX:
-      if (hasUserMessage) {
-        // Always scroll for user's own messages
-        setShouldScrollToBottom(true);
-        setUserScrolledUp(false); // Reset scroll intent when user sends message
-      } else if (!userScrolledUp && isUserNearBottom && checkIfNearBottom()) {
-        // Only scroll for other messages if user hasn't intentionally scrolled up
-        setShouldScrollToBottom(true);
-      }
-      // If user has scrolled up to view history, don't disturb them with auto-scroll
-    }
+      // IMPROVED AUTO-SCROLL LOGIC:
+      const shouldAutoScroll =
+        hasUserMessage || // Always scroll for user's own messages
+        !userScrolledUp || // Scroll if user hasn't intentionally scrolled up
+        isUserNearBottom; // Scroll if user is still near bottom
 
-    // Only update message count if we're not loading older messages
-    if (!isFetchingNextPage) {
+      if (shouldAutoScroll) {
+        setShouldScrollToBottom(true);
+
+        // Reset scroll intent when showing new messages
+        if (hasUserMessage) {
+          setUserScrolledUp(false);
+        }
+      }
+
+      // Update message count
       setLastMessageCount(currentMessageCount);
     }
   }, [
@@ -248,24 +256,24 @@ const ChatContainer: React.FC = () => {
     user,
     isUserNearBottom,
     userScrolledUp,
-    checkIfNearBottom,
     isInitialLoad,
     isFetchingNextPage,
   ]);
 
-  // Effect for scrolling to bottom with improved timing
+  // Effect for scrolling to bottom with multiple attempts for reliability
   useEffect(() => {
     if (shouldScrollToBottom && containerRef.current) {
-      // Multiple attempts with different timings for better reliability
       const timeouts: NodeJS.Timeout[] = [];
 
       // Immediate scroll
-      scrollToBottom();
+      scrollToBottom("smooth");
 
-      // Delayed scrolls to handle any async rendering
-      [50, 100, 200].forEach((delay) => {
+      // Multiple delayed attempts for reliability
+      [50, 100, 200, 300].forEach((delay) => {
         const timeout = setTimeout(() => {
-          scrollToBottom();
+          if (containerRef.current) {
+            scrollToBottom("smooth");
+          }
         }, delay);
         timeouts.push(timeout);
       });
@@ -280,29 +288,29 @@ const ChatContainer: React.FC = () => {
 
   // Effect for typing indicator
   useEffect(() => {
-    if (isTyping && isUserNearBottom && !isFetchingNextPage) {
-      scrollToBottom();
+    if (isTyping && (isUserNearBottom || !userScrolledUp)) {
+      scrollToBottom("smooth");
     }
-  }, [isTyping, isUserNearBottom, scrollToBottom, isFetchingNextPage]);
+  }, [isTyping, isUserNearBottom, userScrolledUp, scrollToBottom]);
 
-  // Handle sending message
+  // Handle sending message with immediate scroll
   const handleSendMessageWithScroll = useCallback(() => {
     handleSendMessage();
     setShouldScrollToBottom(true);
+    setUserScrolledUp(false); // Reset scroll intent when user sends message
+
     // Force immediate scroll for user messages
     setTimeout(() => scrollToBottom("smooth", true), 10);
+    setTimeout(() => scrollToBottom("smooth", true), 100);
   }, [handleSendMessage, scrollToBottom]);
 
-  // Improved scroll to bottom button handler
+  // Scroll to bottom button handler
   const handleScrollToBottomClick = useCallback(() => {
     setShouldScrollToBottom(true);
     setIsUserNearBottom(true);
-    setUserScrolledUp(false); // Reset scroll intent when user explicitly scrolls to bottom
+    setUserScrolledUp(false);
 
-    // Force scroll immediately with multiple attempts
     scrollToBottom("smooth", true);
-
-    // Additional attempts to ensure reliability
     setTimeout(() => scrollToBottom("smooth", true), 50);
     setTimeout(() => scrollToBottom("instant", true), 100);
   }, [scrollToBottom]);
@@ -316,12 +324,14 @@ const ChatContainer: React.FC = () => {
       setUserScrolledUp(false);
       setLastMessageCount(0);
       setScrollPositionBeforeLoad(null);
+      setLastScrollTop(0);
     }
   }, [selectedChatId]);
 
   if (!selectedChatId) {
     return <NotSelectedChat selectedChatId={selectedChatId as string} />;
   }
+
   const summary = chatSummary?.data?.summary;
 
   return (
@@ -372,7 +382,10 @@ const ChatContainer: React.FC = () => {
               <DialogTrigger asChild>
                 <div>
                   <Tooltip>
-                    <TooltipTrigger className="bg-primary flex cursor-pointer items-center rounded-md px-2 py-1.5 sm:px-3 sm:text-sm">
+                    <TooltipTrigger
+                      className="bg-primary flex cursor-pointer items-center rounded-md px-2 py-1.5 sm:px-3 sm:text-sm"
+                      onClick={handleGenerateSummary}
+                    >
                       <WandSparkles className="h-4 w-4 sm:h-6 sm:w-6" />
                     </TooltipTrigger>
                     <TooltipContent>
@@ -491,7 +504,7 @@ const ChatContainer: React.FC = () => {
         </div>
       </div>
 
-      {/* Scroll to bottom button - Fixed positioning and click handler */}
+      {/* Scroll to bottom button */}
       {!isUserNearBottom &&
         !isChatMessagesLoading &&
         messages?.messages?.length > 0 && (
