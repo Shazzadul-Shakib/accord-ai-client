@@ -22,6 +22,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { ButtonLoader } from "@/components/shared/loader/button-loader";
 
 const ChatContainer: React.FC = () => {
   const {
@@ -469,11 +470,8 @@ const ChatContainer: React.FC = () => {
         {isFetchingNextPage && (
           <div className="mx-auto w-[92%] max-w-6xl py-4">
             <div className="flex justify-center">
-              <div className="border-primary h-6 w-6 animate-spin rounded-full border-b-2"></div>
+              <ButtonLoader text="Loading older messages" />{" "}
             </div>
-            <p className="text-muted-foreground mt-2 text-center text-xs">
-              Loading older messages...
-            </p>
           </div>
         )}
 
@@ -495,7 +493,7 @@ const ChatContainer: React.FC = () => {
             <div className="flex justify-start">
               <TypingIndicator
                 typingUsers={typingUsers}
-                className="bg-muted max-w-xs rounded-lg px-3 py-2"
+                className="bg-border max-w-xs rounded-lg px-3 py-2"
               />
             </div>
           )}
