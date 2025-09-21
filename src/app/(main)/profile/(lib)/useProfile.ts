@@ -68,7 +68,6 @@ export const useProfile = (options?: { onSuccess?: () => void }) => {
       }
     },
     onError: (error: TErrorResponse) => {
-      console.log(error);
       toast.error(error?.data?.message || "Profile update failed");
     },
   });

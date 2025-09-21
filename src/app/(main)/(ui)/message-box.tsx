@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,7 +13,7 @@ const MessageBox: React.FC<{ msg: IMessage; user: string }> = ({
   msg,
   user,
 }) => {
-  const { handleDeleteMessage }=useChat();
+  const { handleDeleteMessage } = useChat();
   return (
     <div
       key={msg._id}

@@ -17,10 +17,8 @@ const notificationResponse = async ({
   );
 };
 
-const deleteNotification = async (notificationId:string) => {
-  return apiService.delete(
-    `/notification/${notificationId}`,
-  );
+const deleteNotification = async (notificationId: string) => {
+  return apiService.delete(`/notification/${notificationId}`);
 };
 
 export const notificationApi = {

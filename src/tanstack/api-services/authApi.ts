@@ -19,8 +19,8 @@ const allUsers = async () => {
   return apiService.get("/user");
 };
 
-const updateUser = async (data:object) => {
-  return apiService.patch("/user/update-profile",data);
+const updateUser = async (data: object) => {
+  return apiService.patch("/user/update-profile", data);
 };
 
 export const authApi = {

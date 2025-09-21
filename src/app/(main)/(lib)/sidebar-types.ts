@@ -6,9 +6,9 @@ export interface IChat {
 }
 export interface INotification {
   id: string;
-  topicId:string,
+  topicId: string;
   title: string;
-  hasResponse:boolean;
+  hasResponse: boolean;
   description: string;
   time: string;
 }

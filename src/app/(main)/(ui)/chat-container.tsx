@@ -35,13 +35,11 @@ const ChatContainer: React.FC = () => {
     isConnected,
     typingUsers,
     isTyping,
-    isMessageDeleting,
     isSummaryLoading,
     chatSummary,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-    generateSummary,
   } = useChat();
 
   const router = useRouter();
@@ -50,11 +48,12 @@ const ChatContainer: React.FC = () => {
   const { loggedUser } = useProfile();
   const user = loggedUser?.data?._id;
 
-  // State for managing scroll behavior
+  // State for managing scroll behavior - Added user scroll intent tracking
   const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true);
   const [isUserNearBottom, setIsUserNearBottom] = useState(true);
   const [lastMessageCount, setLastMessageCount] = useState(0);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [userScrolledUp, setUserScrolledUp] = useState(false); // Track if user intentionally scrolled up
   const [scrollPositionBeforeLoad, setScrollPositionBeforeLoad] = useState<{
     scrollTop: number;
     scrollHeight: number;
@@ -73,21 +72,66 @@ const ChatContainer: React.FC = () => {
     return distanceFromBottom <= SCROLL_THRESHOLD;
   }, []);
 
-  // Smooth scroll to bottom
-  const scrollToBottom = useCallback((behavior: ScrollBehavior = "smooth") => {
-    bottomRef.current?.scrollIntoView({ behavior });
-  }, []);
+  // Improved scroll to bottom function with better reliability
+  const scrollToBottom = useCallback(
+    (behavior: ScrollBehavior = "smooth", force = false) => {
+      const container = containerRef.current;
+      const bottom = bottomRef.current;
 
-  // Handle scroll events
+      if (!container || !bottom) return;
+
+      try {
+        // Method 1: Use scrollIntoView on bottom element
+        bottom.scrollIntoView({
+          behavior,
+          block: "end",
+          inline: "nearest",
+        });
+
+        // Method 2: Fallback - direct scroll to bottom
+        if (force || behavior === "instant") {
+          setTimeout(() => {
+            if (container) {
+              container.scrollTop = container.scrollHeight;
+            }
+          }, 10);
+        }
+      } catch (error) {
+        // Method 3: Final fallback - simple scroll
+        console.warn("ScrollIntoView failed, using fallback:", error);
+        container.scrollTop = container.scrollHeight;
+      }
+    },
+    [],
+  );
+
+  // Handle scroll events with user intent tracking
   const handleScroll = useCallback(() => {
     const container = containerRef.current;
     if (!container) return;
 
     const nearBottom = checkIfNearBottom();
+    const wasNearBottom = isUserNearBottom;
+
     setIsUserNearBottom(nearBottom);
 
+    // Track user scroll intent - if user scrolls away from bottom, they want to view history
+    if (wasNearBottom && !nearBottom && !isInitialLoad) {
+      setUserScrolledUp(true);
+    }
+
+    // Reset scroll intent if user returns to bottom
+    if (nearBottom && userScrolledUp) {
+      setUserScrolledUp(false);
+    }
+
     // Load more messages when scrolling near top
-    if (container.scrollTop < 100 && hasNextPage && !isFetchingNextPage) {
+    if (
+      container.scrollTop < 200 &&
+      hasNextPage &&
+      !isFetchingNextPage &&
+      !isInitialLoad
+    ) {
       // Store current scroll position before loading
       setScrollPositionBeforeLoad({
         scrollTop: container.scrollTop,
@@ -95,7 +139,15 @@ const ChatContainer: React.FC = () => {
       });
       fetchNextPage();
     }
-  }, [hasNextPage, fetchNextPage, isFetchingNextPage, checkIfNearBottom]);
+  }, [
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+    checkIfNearBottom,
+    isInitialLoad,
+    isUserNearBottom,
+    userScrolledUp,
+  ]);
 
   // Debounced scroll handler for better performance
   const debouncedHandleScroll = useCallback(debounce(handleScroll, 100), [
@@ -124,33 +176,41 @@ const ChatContainer: React.FC = () => {
         const heightDifference =
           container.scrollHeight - scrollPositionBeforeLoad.scrollHeight;
         if (heightDifference > 0) {
-          // Maintain the exact scroll position relative to the bottom
-          container.scrollTop =
+          // Maintain the exact scroll position relative to new content
+          const newScrollTop =
             scrollPositionBeforeLoad.scrollTop + heightDifference;
+          container.scrollTop = newScrollTop;
+
+          // Update the isUserNearBottom state based on new position
+          const { scrollTop, scrollHeight, clientHeight } = container;
+          const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+          setIsUserNearBottom(distanceFromBottom <= SCROLL_THRESHOLD);
         }
         setScrollPositionBeforeLoad(null);
       }
     };
 
-    // Use a small timeout to ensure DOM has updated
-    const timeoutId = setTimeout(restoreScrollPosition, 100);
+    // Use requestAnimationFrame for better timing with DOM updates
+    const rafId = requestAnimationFrame(() => {
+      restoreScrollPosition();
+    });
 
-    return () => clearTimeout(timeoutId);
-  }, [isFetchingNextPage, scrollPositionBeforeLoad]); // Only depend on these specific values
+    return () => cancelAnimationFrame(rafId);
+  }, [isFetchingNextPage, scrollPositionBeforeLoad, SCROLL_THRESHOLD]);
 
   // Effect for initial load
   useEffect(() => {
     if (!isChatMessagesLoading && messages?.messages && isInitialLoad) {
       setIsInitialLoad(false);
       setShouldScrollToBottom(true);
-      // Scroll to bottom immediately on initial load
-      setTimeout(() => scrollToBottom("instant"), 100);
+      // Scroll to bottom immediately on initial load with force
+      setTimeout(() => scrollToBottom("instant", true), 100);
     }
   }, [isChatMessagesLoading, messages, isInitialLoad, scrollToBottom]);
 
-  // Effect for new messages
+  // Effect for new messages - Respect user scroll intent
   useEffect(() => {
-    if (!messages?.messages || isFetchingNextPage) return; // Don't auto-scroll when loading older messages
+    if (!messages?.messages || isFetchingNextPage) return;
 
     const currentMessageCount = messages.messages.length;
 
@@ -166,12 +226,16 @@ const ChatContainer: React.FC = () => {
       // Check if any of the new messages are from the current user
       const hasUserMessage = latestMessages.some((msg) => msg.sender === user);
 
-      // Auto-scroll ONLY if:
-      // 1. User sent a message
-      // 2. User is already near bottom (within threshold)
-      if (hasUserMessage || (isUserNearBottom && checkIfNearBottom())) {
+      // Auto-scroll logic with better UX:
+      if (hasUserMessage) {
+        // Always scroll for user's own messages
+        setShouldScrollToBottom(true);
+        setUserScrolledUp(false); // Reset scroll intent when user sends message
+      } else if (!userScrolledUp && isUserNearBottom && checkIfNearBottom()) {
+        // Only scroll for other messages if user hasn't intentionally scrolled up
         setShouldScrollToBottom(true);
       }
+      // If user has scrolled up to view history, don't disturb them with auto-scroll
     }
 
     // Only update message count if we're not loading older messages
@@ -183,21 +247,34 @@ const ChatContainer: React.FC = () => {
     lastMessageCount,
     user,
     isUserNearBottom,
+    userScrolledUp,
     checkIfNearBottom,
     isInitialLoad,
     isFetchingNextPage,
   ]);
 
-  // Effect for scrolling to bottom
+  // Effect for scrolling to bottom with improved timing
   useEffect(() => {
     if (shouldScrollToBottom && containerRef.current) {
-      // Use a small delay to ensure DOM is updated
-      const timeoutId = setTimeout(() => {
-        scrollToBottom();
-        setShouldScrollToBottom(false);
-      }, 50);
+      // Multiple attempts with different timings for better reliability
+      const timeouts: NodeJS.Timeout[] = [];
 
-      return () => clearTimeout(timeoutId);
+      // Immediate scroll
+      scrollToBottom();
+
+      // Delayed scrolls to handle any async rendering
+      [50, 100, 200].forEach((delay) => {
+        const timeout = setTimeout(() => {
+          scrollToBottom();
+        }, delay);
+        timeouts.push(timeout);
+      });
+
+      setShouldScrollToBottom(false);
+
+      return () => {
+        timeouts.forEach((timeout) => clearTimeout(timeout));
+      };
     }
   }, [shouldScrollToBottom, scrollToBottom]);
 
@@ -212,7 +289,23 @@ const ChatContainer: React.FC = () => {
   const handleSendMessageWithScroll = useCallback(() => {
     handleSendMessage();
     setShouldScrollToBottom(true);
-  }, [handleSendMessage]);
+    // Force immediate scroll for user messages
+    setTimeout(() => scrollToBottom("smooth", true), 10);
+  }, [handleSendMessage, scrollToBottom]);
+
+  // Improved scroll to bottom button handler
+  const handleScrollToBottomClick = useCallback(() => {
+    setShouldScrollToBottom(true);
+    setIsUserNearBottom(true);
+    setUserScrolledUp(false); // Reset scroll intent when user explicitly scrolls to bottom
+
+    // Force scroll immediately with multiple attempts
+    scrollToBottom("smooth", true);
+
+    // Additional attempts to ensure reliability
+    setTimeout(() => scrollToBottom("smooth", true), 50);
+    setTimeout(() => scrollToBottom("instant", true), 100);
+  }, [scrollToBottom]);
 
   // Reset scroll state when chat changes
   useEffect(() => {
@@ -220,6 +313,7 @@ const ChatContainer: React.FC = () => {
       setIsInitialLoad(true);
       setShouldScrollToBottom(true);
       setIsUserNearBottom(true);
+      setUserScrolledUp(false);
       setLastMessageCount(0);
       setScrollPositionBeforeLoad(null);
     }
@@ -228,7 +322,6 @@ const ChatContainer: React.FC = () => {
   if (!selectedChatId) {
     return <NotSelectedChat selectedChatId={selectedChatId as string} />;
   }
-
   const summary = chatSummary?.data?.summary;
 
   return (
@@ -279,70 +372,47 @@ const ChatContainer: React.FC = () => {
               <DialogTrigger asChild>
                 <div>
                   <Tooltip>
-                    <TooltipTrigger
-                      className="bg-primary text-primary-foreground hover:bg-primary/90 flex cursor-pointer items-center rounded-md px-2 py-1.5 transition-colors disabled:opacity-50 sm:px-3 sm:text-sm"
-                      onClick={() => {
-                        if (!chatSummary?.data && !isSummaryLoading) {
-                          generateSummary();
-                        }
-                      }}
-                      disabled={isSummaryLoading}
-                    >
-                      <WandSparkles
-                        className={`h-4 w-4 sm:h-5 sm:w-5 ${isSummaryLoading ? "animate-spin" : ""}`}
-                      />
+                    <TooltipTrigger className="bg-primary flex cursor-pointer items-center rounded-md px-2 py-1.5 sm:px-3 sm:text-sm">
+                      <WandSparkles className="h-4 w-4 sm:h-6 sm:w-6" />
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>
-                        {chatSummary?.data
-                          ? "View AI Summary"
-                          : "Generate AI Summary"}
-                      </p>
+                      <p>Generate Summary</p>
                     </TooltipContent>
                   </Tooltip>
                 </div>
               </DialogTrigger>
-              <DialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto">
+              <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>AI Generated Chat Summary</DialogTitle>
-                  <DialogDescription>
-                    AI-powered summary of your conversation
-                  </DialogDescription>
+                  <DialogTitle> AI Generated Chat Summary</DialogTitle>
+                  <DialogDescription></DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                   {isSummaryLoading ? (
                     <div className="animate-pulse space-y-3">
-                      <div className="bg-muted h-4 w-3/4 rounded"></div>
-                      <div className="bg-muted h-4 w-1/2 rounded"></div>
-                      <div className="bg-muted h-4 w-2/3 rounded"></div>
-                      <div className="bg-muted h-4 w-5/6 rounded"></div>
-                      <div className="bg-muted h-4 w-2/3 rounded"></div>
+                      <div className="bg-border h-4 w-3/4 rounded"></div>
+                      <div className="bg-border h-4 w-1/2 rounded"></div>
                     </div>
                   ) : summary ? (
                     <>
                       <div className="space-y-2">
-                        <h3 className="text-lg font-semibold">Title</h3>
-                        <p className="text-muted-foreground text-sm leading-relaxed">
+                        <h3 className="font-medium">Title</h3>
+                        <p className="text-muted-foreground text-sm">
                           {summary.title}
                         </p>
                       </div>
                       <div className="space-y-2">
-                        <h3 className="text-lg font-semibold">Description</h3>
-                        <p className="text-muted-foreground text-sm leading-relaxed">
+                        <h3 className="font-medium">Description</h3>
+                        <p className="text-muted-foreground text-sm">
                           {summary.description}
                         </p>
                       </div>
                       {summary.conclusions?.length > 0 && (
                         <div className="space-y-2">
-                          <h3 className="text-lg font-semibold">
-                            Key Conclusions
-                          </h3>
-                          <ul className="text-muted-foreground list-inside list-disc space-y-1 text-sm">
+                          <h3 className="font-medium">Key Conclusions</h3>
+                          <ul className="text-muted-foreground list-inside list-disc text-sm">
                             {summary.conclusions.map(
                               (conclusion: string, i: number) => (
-                                <li key={i} className="leading-relaxed">
-                                  {conclusion}
-                                </li>
+                                <li key={i}>{conclusion}</li>
                               ),
                             )}
                           </ul>
@@ -350,52 +420,21 @@ const ChatContainer: React.FC = () => {
                       )}
                       {summary.points?.length > 0 && (
                         <div className="space-y-2">
-                          <h3 className="text-lg font-semibold">Key Points</h3>
-                          <ul className="text-muted-foreground list-inside list-disc space-y-1 text-sm">
+                          <h3 className="font-medium">Key Points</h3>
+                          <ul className="text-muted-foreground list-inside list-disc text-sm">
                             {summary.points.map(
-                              (point: { event: string }, i: number) => (
-                                <li key={i} className="leading-relaxed">
-                                  {point.event}
-                                </li>
+                              (p: { event: string }, i: number) => (
+                                <li key={i}>{p.event}</li>
                               ),
                             )}
                           </ul>
                         </div>
                       )}
-                      <div className="border-t pt-4">
-                        <button
-                          onClick={() => generateSummary()}
-                          disabled={isSummaryLoading}
-                          className="text-primary hover:text-primary/80 text-sm disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                          🔄 Regenerate Summary
-                        </button>
-                      </div>
                     </>
                   ) : (
-                    <div className="py-8 text-center">
-                      <WandSparkles className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
-                      <p className="text-muted-foreground mb-4 text-sm">
-                        No summary available for this conversation yet.
-                      </p>
-                      <button
-                        onClick={() => generateSummary()}
-                        disabled={isSummaryLoading || !selectedChatId}
-                        className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-4 py-2 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        {isSummaryLoading ? (
-                          <>
-                            <WandSparkles className="mr-2 inline h-4 w-4 animate-spin" />
-                            Generating Summary...
-                          </>
-                        ) : (
-                          <>
-                            <WandSparkles className="mr-2 inline h-4 w-4" />
-                            Generate Summary
-                          </>
-                        )}
-                      </button>
-                    </div>
+                    <p className="text-muted-foreground text-sm">
+                      No summary available
+                    </p>
                   )}
                 </div>
               </DialogContent>
@@ -452,16 +491,13 @@ const ChatContainer: React.FC = () => {
         </div>
       </div>
 
-      {/* Scroll to bottom button */}
+      {/* Scroll to bottom button - Fixed positioning and click handler */}
       {!isUserNearBottom &&
         !isChatMessagesLoading &&
         messages?.messages?.length > 0 && (
           <div className="absolute right-6 bottom-20 z-10">
             <button
-              onClick={() => {
-                setShouldScrollToBottom(true);
-                setIsUserNearBottom(true);
-              }}
+              onClick={handleScrollToBottomClick}
               className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full p-3 shadow-lg transition-all duration-200 hover:scale-105"
               aria-label="Scroll to bottom"
             >

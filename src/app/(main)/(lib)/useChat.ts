@@ -5,7 +5,6 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { useSearchParams } from "next/navigation";
 import { useEffect, useState, useRef, useMemo } from "react";
 import { IMessage } from "./chat-types";
 import { useSidebar } from "./useSidebar";
@@ -14,6 +13,7 @@ import { useSocket } from "@/providers/socket-provider";
 import { useMessage } from "@/hooks/useMessages";
 import { toast } from "sonner";
 import { TErrorResponse } from "@/app/(auth)/login/(lib)/loginSchema";
+import { useSafeSearchParams } from "@/hooks/useSearchParams";
 
 type TMessage = {
   text: string;
@@ -21,19 +21,18 @@ type TMessage = {
 };
 
 export const useChat = () => {
-  const searchParams = useSearchParams();
-  const selectedChatId = searchParams.get("chat");
+  const searchParams = useSafeSearchParams();
+
+  const selectedChatId = searchParams?.get("chat");
   const { chatList } = useSidebar();
   const { isConnected } = useSocket();
   const chats = chatList?.data;
   const queryClient = useQueryClient();
 
-  // Get chat topic
   const chatTopic = chats?.find(
     (chat: IChat) => chat.roomId === selectedChatId,
   )?.topicTitle;
 
-  // Use our message hook for socket functionality
   const {
     messages: socketMessages,
     sendMessage: sendSocketMessage,
@@ -43,7 +42,6 @@ export const useChat = () => {
     setMessages: setSocketMessages,
   } = useMessage();
 
-  // Get messages from API (for infinite scroll)
   const {
     data: chatMessages,
     isLoading: isChatMessagesLoading,
@@ -59,28 +57,18 @@ export const useChat = () => {
         cursor: pageParam,
       }),
     enabled: !!selectedChatId,
-    refetchOnWindowFocus: false, // Disable auto-refetch to prevent scroll issues
-    refetchInterval: false, // Use socket for real-time updates instead
+    refetchOnWindowFocus: false,
+    refetchInterval: false,
     getNextPageParam: (lastPage) => lastPage?.data?.nextCursor ?? undefined,
     initialPageParam: "",
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 
-  // Summary mutation - only called when user clicks
-  const {
-    mutate: generateSummary,
-    isPending: isSummaryLoading,
-    data: chatSummary,
-    reset: resetSummary,
-  } = useMutation({
-    mutationFn: () => chatApi.getSummary({ roomId: selectedChatId as string }),
-    onError: (error: TErrorResponse) => {
-      toast.error(error.data?.message || "Failed to generate summary");
-      console.error("Summary generation error:", error);
-    },
-    onSuccess: () => {
-      toast.success("Summary generated successfully!");
-    },
+  const { isLoading: isSummaryLoading, data: chatSummary } = useQuery({
+    queryKey: ["summary", selectedChatId],
+    queryFn: () => chatApi.getSummary({ roomId: selectedChatId as string }),
+    enabled: Boolean(selectedChatId),
+    staleTime: 1000 * 60,
   });
 
   const { mutate: deleteMessage, isPending: isMessageDeleting } = useMutation({
@@ -93,7 +81,6 @@ export const useChat = () => {
     },
     onError: (error: TErrorResponse) => {
       toast.error(error.data.message || "Message deletion unsuccessful");
-      console.log(error);
     },
   });
 
@@ -103,36 +90,30 @@ export const useChat = () => {
   const hasInitializedRef = useRef<boolean>(false);
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Combine and deduplicate messages from API and socket
   const messages = useMemo(() => {
     if (!chatMessages?.pages) return { messages: [], nextCursor: "" };
 
-    // Flatten all pages of messages
     const allApiMessages = chatMessages.pages.flatMap(
       (page) => page.data.messages,
     );
 
-    // Create a map for efficient deduplication
     const messageMap = new Map<string, IMessage>();
 
-    // Add API messages first (older messages)
     allApiMessages.forEach((msg) => {
       if (msg._id) {
         messageMap.set(msg._id, msg);
       }
     });
 
-    // Add socket messages (newer messages), replacing any duplicates
     socketMessages.forEach((msg) => {
       if (msg._id) {
         messageMap.set(msg._id, msg);
       }
     });
 
-    // Convert back to array and sort by timestamp
     const combinedMessages = Array.from(messageMap.values()).sort((a, b) => {
-      const timeA = new Date( a.createdAt || 0).getTime();
-      const timeB = new Date( b.createdAt || 0).getTime();
+      const timeA = new Date(a.createdAt || 0).getTime();
+      const timeB = new Date(b.createdAt || 0).getTime();
       return timeA - timeB;
     });
 
@@ -142,7 +123,6 @@ export const useChat = () => {
     };
   }, [chatMessages, socketMessages]);
 
-  // Reset initialization ref on mount
   useEffect(() => {
     hasInitializedRef.current = false;
     return () => {
@@ -152,35 +132,31 @@ export const useChat = () => {
     };
   }, []);
 
-  // Handle room changes and initial message loading
   useEffect(() => {
-    if (!selectedChatId) {
-      setSocketMessages([]);
+    const currentChatId = selectedChatId;
+
+    if (!currentChatId) {
+      // setSocketMessages([]);
       hasInitializedRef.current = false;
       return;
     }
 
-    if (
-      selectedChatId !== prevChatIdRef.current ||
-      !hasInitializedRef.current
-    ) {
+    if (currentChatId !== prevChatIdRef.current || !hasInitializedRef.current) {
       const joinWithRetry = () => {
-        if (isConnected) {
-          console.log("🔄 Switching to chat room:", selectedChatId);
-          // Clear socket messages when switching rooms
-          setSocketMessages([]);
-          joinRoom(selectedChatId);
-          hasInitializedRef.current = true;
-          prevChatIdRef.current = selectedChatId;
-        } else {
-          console.log("⏳ Waiting for socket connection...");
+        if (!isConnected) {
           retryTimeoutRef.current = setTimeout(joinWithRetry, 500);
+          return;
         }
+
+        setSocketMessages([]);
+        joinRoom(currentChatId);
+        hasInitializedRef.current = true;
+        prevChatIdRef.current = currentChatId;
       };
+
       joinWithRetry();
     }
 
-    // Cleanup retry timeout on unmount or dependency change
     return () => {
       if (retryTimeoutRef.current) {
         clearTimeout(retryTimeoutRef.current);
@@ -188,14 +164,6 @@ export const useChat = () => {
     };
   }, [selectedChatId, isConnected, joinRoom, setSocketMessages]);
 
-  // Reset summary when chat changes
-  useEffect(() => {
-    if (selectedChatId !== prevChatIdRef.current) {
-      resetSummary();
-    }
-  }, [selectedChatId, resetSummary]);
-
-  // Handle sending messages
   const handleSendMessage = () => {
     if (!message?.text?.trim() || !selectedChatId || !message.sender) {
       console.warn("Cannot send message: missing required fields");
@@ -207,15 +175,10 @@ export const useChat = () => {
       return;
     }
 
-    console.log("📤 Sending message via socket");
 
-    // Send message via socket
     sendSocketMessage(selectedChatId, message.sender, message.text);
-
-    // Clear the input
     setMessage({ text: "", sender: message.sender });
 
-    // Stop typing indicator
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
       typingTimeoutRef.current = null;
@@ -223,7 +186,6 @@ export const useChat = () => {
     handleTyping(selectedChatId, message.sender, false);
   };
 
-  // Handle typing indicators
   const handleMessageInputChange = (newMessage: TMessage) => {
     setMessage(newMessage);
 
@@ -241,7 +203,6 @@ export const useChat = () => {
     }
   };
 
-  // Get current typing users (excluding current user)
   const getTypingUsers = (): string[] => {
     if (!selectedChatId) return [];
 
@@ -257,7 +218,6 @@ export const useChat = () => {
       .map((key) => key.split("-")[1]);
   };
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (typingTimeoutRef.current) {
@@ -276,7 +236,6 @@ export const useChat = () => {
     deleteMessage({ roomId: selectedChatId as string, messageId });
   };
 
-  // Improved fetchNextPage wrapper
   const handleFetchNextPage = async () => {
     if (hasNextPage && !isFetchingNextPage) {
       try {
@@ -290,15 +249,10 @@ export const useChat = () => {
   };
 
   return {
-    // Message state
     setMessage: handleMessageInputChange,
     message,
     messages,
-
-    // Actions
     handleSendMessage,
-
-    // Chat info
     selectedChatId,
     isFetchingNextPage,
     fetchNextPage: handleFetchNextPage,
@@ -310,16 +264,9 @@ export const useChat = () => {
     isMessageDeleting,
     chatSummary,
     isSummaryLoading,
-
-    // Socket status
     isConnected,
-
-    // Typing indicators
     typingUsers: getTypingUsers(),
     isTyping: getTypingUsers().length > 0,
-
-    // Additional utilities
     refetchMessages,
-    generateSummary,
   };
 };

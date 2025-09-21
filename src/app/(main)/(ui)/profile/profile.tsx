@@ -15,13 +15,12 @@ const Profile: React.FC = () => {
   const { logout, isLoading } = useLogout();
   const { isLoggedUserLoading, loggedUser } = useProfile();
 
-
   return (
     <div>
       <DropdownMenu>
         <DropdownMenuTrigger>
           {isLoggedUserLoading ? (
-            <div className="h-[36px] w-[36px] animate-pulse rounded-full bg-muted" />
+            <div className="bg-muted h-[36px] w-[36px] animate-pulse rounded-full" />
           ) : (
             <Image
               src={loggedUser?.data?.image || "/user.jpg"}

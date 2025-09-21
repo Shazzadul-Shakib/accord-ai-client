@@ -1,16 +1,18 @@
 import { TErrorResponse } from "@/app/(auth)/login/(lib)/loginSchema";
+import { useSafeSearchParams } from "@/hooks/useSearchParams";
 import { authApi } from "@/tanstack/api-services/authApi";
 import { chatApi } from "@/tanstack/api-services/chatApi";
 import { notificationApi } from "@/tanstack/api-services/notificationApi";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 export const useSidebar = (options?: { onSuccess?: () => void }) => {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const searchParams = useSearchParams();
-  const selectedChatId = searchParams.get("chat");
+  const searchParams = useSafeSearchParams();
+
+  const selectedChatId = searchParams?.get("chat");
   // get logged users ChatLists
   const {
     isPending: isChatListLoading,
@@ -20,7 +22,7 @@ export const useSidebar = (options?: { onSuccess?: () => void }) => {
   } = useQuery({
     queryKey: ["chat"],
     queryFn: chatApi.chatList,
-    refetchInterval:3000
+    refetchInterval: 3000,
   });
 
   // get all users
@@ -56,7 +58,6 @@ export const useSidebar = (options?: { onSuccess?: () => void }) => {
       },
       onError: (error: TErrorResponse) => {
         toast.error(error.data.message);
-        console.log(error);
       },
     });
 
@@ -83,7 +84,6 @@ export const useSidebar = (options?: { onSuccess?: () => void }) => {
       },
       onError: (error: TErrorResponse) => {
         toast.error(error.data.message);
-        console.log(error);
       },
     });
 

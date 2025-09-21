@@ -2,7 +2,6 @@ import { IMessage } from "@/app/(main)/(lib)/chat-types";
 import { useSocket } from "@/providers/socket-provider";
 import { useEffect, useRef, useState } from "react";
 
-
 interface UseMessageReturn {
   messages: IMessage[];
   sendMessage: (roomId: string, senderId: string, text: string) => void;
@@ -30,7 +29,6 @@ export const useMessage = (): UseMessageReturn => {
       createdAt: string;
       _id: string;
     }) => {
-      console.log("📨 Received message:", messageData);
 
       const newMessage: IMessage = {
         text: messageData.text,
@@ -53,7 +51,6 @@ export const useMessage = (): UseMessageReturn => {
 
     // Listen for message acknowledgments
     const handleMessageSent = (ack: { messageId: string; status: string }) => {
-      console.log("✅ Message delivered:", ack);
       // You can update message status here if needed
     };
 
@@ -63,7 +60,6 @@ export const useMessage = (): UseMessageReturn => {
       senderId: string;
       isTyping: boolean;
     }) => {
-      console.log("👤 User typing:", data);
 
       const typingKey = `${data.roomId}-${data.senderId}`;
 
@@ -127,7 +123,6 @@ export const useMessage = (): UseMessageReturn => {
       return;
     }
 
-    console.log("📤 Sending message:", { roomId, senderId, text });
 
     // Send to server using your server's expected format
     socket.emit("send_message", {
@@ -149,7 +144,6 @@ export const useMessage = (): UseMessageReturn => {
   ) => {
     if (!socket || !isConnected) return;
 
-    console.log("⌨️ Typing indicator:", { roomId, senderId, isTyping });
 
     // Send typing indicator to server
     socket.emit("send_message", {
@@ -169,11 +163,9 @@ export const useMessage = (): UseMessageReturn => {
 
     // Leave previous room if exists
     if (currentRoomRef.current && currentRoomRef.current !== roomId) {
-      console.log("🚪 Leaving previous room:", currentRoomRef.current);
       socket.emit("leave_room", currentRoomRef.current);
     }
 
-    console.log("🚪 Joining room:", roomId);
     socket.emit("join_room", roomId);
     currentRoomRef.current = roomId;
 

@@ -23,12 +23,14 @@ const Notification: FC = () => {
     handleDeleteNotification,
   } = useSidebar({ onSuccess: () => setOpenId(null) });
 
-  console.log(notifications);
 
   return (
     <div className="relative mt-2">
       <DropdownMenu>
-        <DropdownMenuTrigger className="relative">
+        <DropdownMenuTrigger
+          suppressHydrationWarning={true}
+          className="relative"
+        >
           <Bell className="mr-2 h-4 w-4 cursor-pointer sm:h-6 sm:w-6" />
           {/* Notification badge */}
           <div className="bg-primary absolute -top-1.5 right-1 flex h-4 w-4 items-center justify-center rounded-full">
@@ -59,7 +61,10 @@ const Notification: FC = () => {
                     setOpenId(open ? notification.id : null)
                   }
                 >
-                  <customDialog.DialogTrigger asChild>
+                  <customDialog.DialogTrigger
+                    suppressHydrationWarning={true}
+                    asChild
+                  >
                     <div className="hover:bg-border focus:bg-border flex-1 cursor-pointer rounded-md p-2">
                       <div className="flex flex-col gap-1">
                         <div className="text-muted text-xs">
@@ -73,7 +78,7 @@ const Notification: FC = () => {
                   </customDialog.DialogTrigger>
                   <customDialog.DialogContent>
                     <customDialog.DialogHeader>
-                      <customDialog.DialogTitle className=" my-6">
+                      <customDialog.DialogTitle className="my-6">
                         {notification.hasResponse ? (
                           <div className="flex items-center gap-2">
                             {notification.title}

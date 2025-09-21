@@ -97,7 +97,6 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   }, []);
 
   const disconnectSocket = useCallback(() => {
-    console.log("🔌 Disconnecting socket...");
     cleanupTimeouts();
     if (socketRef.current) {
       cleanupSocket(socketRef.current);
@@ -114,16 +113,13 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   const connectSocket = useCallback(
     (token: string) => {
       if (isConnectingRef.current) {
-        console.log("🔄 Connection already in progress, skipping...");
         return;
       }
 
       if (currentTokenRef.current === token && socketRef.current?.connected) {
-        console.log("✅ Already connected with same token");
         return;
       }
 
-      console.log("🔌 Connecting socket with new token...", token);
       isConnectingRef.current = true;
       currentTokenRef.current = token;
 
@@ -137,7 +133,6 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       cleanupTimeouts();
 
       connectionTimeoutRef.current = setTimeout(() => {
-        console.log("⏰ Connection timeout reached, aborting...");
         if (socketRef.current && !socketRef.current.connected) {
           cleanupSocket(socketRef.current);
           socketRef.current = null;
@@ -147,14 +142,11 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         reconnectAttempts.current++;
 
         if (reconnectAttempts.current < maxReconnectAttempts) {
-          console.log(
-            `🔄 Retrying connection (${reconnectAttempts.current}/${maxReconnectAttempts})...`,
-          );
+          
           retryTimeoutRef.current = setTimeout(() => {
             connectSocket(token);
           }, 3000);
         } else {
-          console.log("❌ Max connection attempts reached, giving up");
           disconnectSocket();
         }
       }, 15000); // Increased timeout
@@ -173,7 +165,6 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         );
 
         newSocket.on("connect", () => {
-          console.log("🟢 Connected to server");
           clearTimeout(connectionTimeoutRef.current);
           setIsConnected(true);
           reconnectAttempts.current = 0;
@@ -190,13 +181,11 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
             error.message.includes("Unauthorized") ||
             error.message.includes("Invalid token")
           ) {
-            console.log("❌ Authentication failed, clearing token");
             disconnectSocket();
           }
         });
 
         newSocket.on("disconnect", (reason) => {
-          console.log("🔴 Disconnected from server:", reason);
           setIsConnected(false);
           isConnectingRef.current = false;
           clearTimeout(connectionTimeoutRef.current);
@@ -212,7 +201,6 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
             currentTokenRef.current &&
             reconnectAttempts.current < maxReconnectAttempts
           ) {
-            console.log(`🔄 Auto-reconnecting due to: ${reason}`);
             retryTimeoutRef.current = setTimeout(() => {
               connectSocket(currentTokenRef.current!);
             }, 2000);
@@ -222,9 +210,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         });
 
         newSocket.on("user_status_changed", ({ userId, isOnline }) => {
-          console.log(
-            `📡 User ${userId} is ${isOnline ? "online" : "offline"}`,
-          );
+         
           setOnlineUsers((prev) =>
             isOnline
               ? [...new Set([...prev, userId])]
@@ -241,7 +227,6 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
             clearTimeout(pingTimeoutRef.current);
           }
           pingTimeoutRef.current = setTimeout(() => {
-            console.log("⚠️ Ping timeout - disconnecting");
             disconnectSocket();
           }, 10000);
         });
@@ -260,7 +245,6 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   useEffect(() => {
     const token = getTokenFromCookies();
     if (token) {
-      console.log("🍪 Token found in cookies, auto-connecting socket...");
       connectSocket(token);
     }
 
@@ -269,20 +253,17 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
 
       if (!isConnectingRef.current) {
         if (currentToken && currentToken !== currentTokenRef.current) {
-          console.log("🔄 New token detected, reconnecting...");
           connectSocket(currentToken);
         } else if (
           !currentToken &&
           (socketRef.current?.connected || currentTokenRef.current)
         ) {
-          console.log("🚪 No token found, disconnecting...");
           disconnectSocket();
         } else if (
           currentToken &&
           !socketRef.current?.connected &&
           currentTokenRef.current === currentToken
         ) {
-          console.log("🔄 Connection lost, attempting reconnection...");
           connectSocket(currentToken);
         }
       }
