@@ -13,7 +13,7 @@ const ChatContainerSkeleton = () => {
             <div className="bg-border flex items-center rounded-md px-4 py-1.5 lg:hidden">
               <ArrowLeft className="h-4 w-4" />
             </div>
-            <div className="bg-muted h-6 w-32 animate-pulse rounded-md"></div>
+            <div className="bg-border/70 h-6 w-32 animate-pulse rounded-md"></div>
             <Wifi className="h-4 w-4 text-gray-400" />
           </div>
           <div className="flex items-center gap-3">
