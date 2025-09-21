@@ -49,11 +49,6 @@ export const useMessage = (): UseMessageReturn => {
       });
     };
 
-    // Listen for message acknowledgments
-    const handleMessageSent = (ack: { messageId: string; status: string }) => {
-      // You can update message status here if needed
-    };
-
     // Listen for typing indicators
     const handleUserTyping = (data: {
       roomId: string;
@@ -96,7 +91,6 @@ export const useMessage = (): UseMessageReturn => {
     // Register event listeners
     socket.on("room_message", handleRoomMessage);
     socket.on("send_message", handleRoomMessage);
-    socket.on("message_sent", handleMessageSent);
     socket.on("user_typing", handleUserTyping);
     socket.on("error_message", handleErrorMessage);
 
@@ -104,7 +98,6 @@ export const useMessage = (): UseMessageReturn => {
     return () => {
       socket.off("room_message", handleRoomMessage);
       socket.off("send_message", handleRoomMessage);
-      socket.off("message_sent", handleMessageSent);
       socket.off("user_typing", handleUserTyping);
       socket.off("error_message", handleErrorMessage);
 

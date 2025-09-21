@@ -6,7 +6,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { IMessage } from "../(lib)/chat-types";
-import { Edit, MoreVertical, Trash } from "lucide-react";
+import { MoreVertical, Trash } from "lucide-react";
 import { useChat } from "../(lib)/useChat";
 
 const MessageBox: React.FC<{ msg: IMessage; user: string }> = ({

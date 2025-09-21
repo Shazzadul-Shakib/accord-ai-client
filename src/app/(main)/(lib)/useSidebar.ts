@@ -72,7 +72,7 @@ export const useSidebar = (options?: { onSuccess?: () => void }) => {
   };
 
   // delete notification
-  const { mutate: deleteNotification, isPending: isNotificationDeleting } =
+  const { mutate: deleteNotification } =
     useMutation({
       mutationFn: notificationApi.deleteNotification,
       onSuccess: (data) => {
