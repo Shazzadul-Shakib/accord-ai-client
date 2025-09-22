@@ -146,7 +146,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
 
       try {
         const newSocket = io(
-          process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:5000",
+          process.env.NEXT_PUBLIC_SOCKET_URL,
           {
             auth: { token },
             transports: ["polling", "websocket"], // Default order for reliability
