@@ -507,7 +507,7 @@ const ChatContainer: React.FC = () => {
             </div>
           )}
 
-          <div ref={bottomRef} />
+          <div ref={bottomRef} style={{ paddingBottom: 80 }} />
         </div>
       </div>
 
