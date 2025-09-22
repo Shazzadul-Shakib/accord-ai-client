@@ -11,7 +11,7 @@ import { useSidebar } from "../(lib)/useSidebar";
 import { IChat } from "../(lib)/sidebar-types";
 import ChatList from "./chat-list";
 import ChatListSkeleton from "./skeletonss/chat-list-skeleton";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Notification from "./notification";
 
 const concert = Concert_One({
@@ -21,9 +21,19 @@ const concert = Concert_One({
 export default function ChatSidebar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const { isChatListLoading, chatList, selectedChatId } = useSidebar();
 
   const chats = chatList?.data;
+
+  const filteredChats = useMemo(() => {
+    if (!chats) return [];
+    if (!searchQuery.trim()) return chats;
+
+    return chats.filter((chat: IChat) =>
+      chat.topicTitle.toLowerCase().includes(searchQuery.toLowerCase()),
+    );
+  }, [chats, searchQuery]);
 
   // Hide sidebar for small and medium screens when on profile page
   if (pathname === "/profile") {
@@ -58,6 +68,8 @@ export default function ChatSidebar() {
               <Search className="text-muted absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
               <input
                 type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search conversations..."
                 className="border-border bg-secondary placeholder:text-muted focus:ring-primary w-full rounded-md border px-9 py-2 text-sm focus:ring-2 focus:outline-none"
               />
@@ -93,7 +105,7 @@ export default function ChatSidebar() {
             {isChatListLoading ? (
               <ChatListSkeleton />
             ) : (
-              chats?.map((chat: IChat) => (
+              filteredChats.map((chat: IChat) => (
                 <ChatList key={chat.roomId} chat={chat} />
               ))
             )}
@@ -132,6 +144,8 @@ export default function ChatSidebar() {
           <Search className="text-muted absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
           <input
             type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search conversations..."
             className="border-border bg-secondary placeholder:text-muted focus:ring-primary w-full rounded-md border px-9 py-2 text-sm focus:ring-2 focus:outline-none"
           />
@@ -166,7 +180,7 @@ export default function ChatSidebar() {
         {isChatListLoading ? (
           <ChatListSkeleton />
         ) : (
-          chats?.map((chat: IChat) => (
+          filteredChats.map((chat: IChat) => (
             <ChatList key={chat.roomId} chat={chat} />
           ))
         )}
