@@ -85,7 +85,7 @@ export const SelectUsers = ({
         };
 
         return (
-          <FormItem className="w-full">
+          <FormItem className="w-full ">
             <FormLabel className="font-semibold">{label}</FormLabel>
             <div className="w-full space-y-2">
               <FormControl>
@@ -118,7 +118,7 @@ export const SelectUsers = ({
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="border-0 focus-visible:ring-0"
                   />
-                  <ScrollArea className="h-[300px]">
+                  <ScrollArea className="h-[240px]">
                     {loading ? (
                       <div className="p-4 text-center">Loading users...</div>
                     ) : filteredUsers.length === 0 ? (
