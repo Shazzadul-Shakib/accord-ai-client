@@ -18,8 +18,8 @@ This project is a full-stack web application that enables users to engage in top
 - MongoDB
 - JWT
 - AI integration for chat summarization
-- vercel
-- render
+- Vercel
+- Render
 
 ## Key Features
 - Topic-Based Chat Rooms: Users can join or create chat rooms centered around specific topics for focused discussions.
