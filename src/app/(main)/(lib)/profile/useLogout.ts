@@ -1,34 +1,28 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { authApi } from "@/tanstack/api-services/authApi";
 import { toast } from "sonner";
-import { TErrorResponse } from "@/app/(auth)/login/(lib)/loginSchema";
 import { useRouter } from "next/navigation";
 import { useSocket } from "@/providers/socket-provider";
+import { useState } from "react";
 
 export const useLogout = () => {
   const router = useRouter();
-  const queryClient = useQueryClient();
   const { disconnectSocket } = useSocket(); // Access socket context
+  const [isLoading, setIsLoading] = useState(false);
 
-  const { mutate: logout, isPending: isLoading } = useMutation({
-    mutationFn: authApi.logoutUser,
-    onSuccess: (data) => {
-      disconnectSocket(); // Disconnect socket before clearing token
-      document.cookie =
-        "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/"; // Clear token
-      toast.success(data.message || "Logout Successful");
-      queryClient.removeQueries({ queryKey: ["user"] });
-      queryClient.removeQueries({ queryKey: ["chat"] });
+  const logout = () => {
+    setIsLoading(true);
+    try {
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      disconnectSocket();
+      toast.success("Logout Successful");
+      // Navigate to login page after successful logout
       router.replace("/login");
-    },
-    onError: (error: TErrorResponse) => {
-      disconnectSocket(); // Ensure socket is disconnected on error
-      document.cookie =
-        "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
-      toast.error(error.data.message || "Logout unsuccessful");
-      router.replace("/login");
-    },
-  });
+    } catch {
+      toast.error("Logout unsuccessful");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return {
     logout,

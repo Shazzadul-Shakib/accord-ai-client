@@ -23,7 +23,6 @@ const Notification: FC = () => {
     handleDeleteNotification,
   } = useSidebar({ onSuccess: () => setOpenId(null) });
 
-
   return (
     <div className="relative mt-2">
       <DropdownMenu>

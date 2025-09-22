@@ -1,6 +1,13 @@
 "use client";
 
-import { ArrowLeft, SendIcon, WandSparkles, Wifi, WifiOff } from "lucide-react";
+import {
+  ArrowLeft,
+  LoaderIcon,
+  SendIcon,
+  WandSparkles,
+  Wifi,
+  WifiOff,
+} from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -23,6 +30,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { ButtonLoader } from "@/components/shared/loader/button-loader";
+import { useAuth } from "@/providers/auth-providers";
 
 const ChatContainer: React.FC = () => {
   const {
@@ -43,6 +51,7 @@ const ChatContainer: React.FC = () => {
     hasNextPage,
     isFetchingNextPage,
   } = useChat();
+  const { isAuthenticated, isLoading } = useAuth();
 
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);

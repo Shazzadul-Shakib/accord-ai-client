@@ -29,7 +29,6 @@ export const useMessage = (): UseMessageReturn => {
       createdAt: string;
       _id: string;
     }) => {
-
       const newMessage: IMessage = {
         text: messageData.text,
         sender: { _id: messageData.senderId },
@@ -55,7 +54,6 @@ export const useMessage = (): UseMessageReturn => {
       senderId: string;
       isTyping: boolean;
     }) => {
-
       const typingKey = `${data.roomId}-${data.senderId}`;
 
       setIsTyping((prev) => ({
@@ -116,7 +114,6 @@ export const useMessage = (): UseMessageReturn => {
       return;
     }
 
-
     // Send to server using your server's expected format
     socket.emit("send_message", {
       roomId,
@@ -136,7 +133,6 @@ export const useMessage = (): UseMessageReturn => {
     isTyping: boolean,
   ) => {
     if (!socket || !isConnected) return;
-
 
     // Send typing indicator to server
     socket.emit("send_message", {

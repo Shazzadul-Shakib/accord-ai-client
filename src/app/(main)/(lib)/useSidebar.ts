@@ -72,20 +72,19 @@ export const useSidebar = (options?: { onSuccess?: () => void }) => {
   };
 
   // delete notification
-  const { mutate: deleteNotification } =
-    useMutation({
-      mutationFn: notificationApi.deleteNotification,
-      onSuccess: (data) => {
-        toast.success(data.message);
-        queryClient.invalidateQueries({
-          queryKey: ["notification"],
-          refetchType: "active",
-        });
-      },
-      onError: (error: TErrorResponse) => {
-        toast.error(error.data.message);
-      },
-    });
+  const { mutate: deleteNotification } = useMutation({
+    mutationFn: notificationApi.deleteNotification,
+    onSuccess: (data) => {
+      toast.success(data.message);
+      queryClient.invalidateQueries({
+        queryKey: ["notification"],
+        refetchType: "active",
+      });
+    },
+    onError: (error: TErrorResponse) => {
+      toast.error(error.data.message);
+    },
+  });
 
   const handleDeleteNotification = (notificationId: string) => {
     deleteNotification(notificationId);

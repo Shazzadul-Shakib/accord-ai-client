@@ -35,17 +35,11 @@ export const useSocket = () => {
   return context;
 };
 
-const getTokenFromCookies = (): string | null => {
-  if (typeof document === "undefined") return null;
+const getTokenFromStorage = (): string | null => {
+  if (typeof window === "undefined") return null;
 
-  const cookies = document.cookie.split(";");
-  for (const cookie of cookies) {
-    const [name, value] = cookie.trim().split("=");
-    if (name === "accessToken") {
-      return decodeURIComponent(value);
-    }
-  }
-  return null;
+  const accessToken = localStorage.getItem("accessToken");
+  return accessToken;
 };
 
 interface SocketProviderProps {
@@ -142,7 +136,6 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         reconnectAttempts.current++;
 
         if (reconnectAttempts.current < maxReconnectAttempts) {
-          
           retryTimeoutRef.current = setTimeout(() => {
             connectSocket(token);
           }, 3000);
@@ -210,7 +203,6 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         });
 
         newSocket.on("user_status_changed", ({ userId, isOnline }) => {
-         
           setOnlineUsers((prev) =>
             isOnline
               ? [...new Set([...prev, userId])]
@@ -243,13 +235,13 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   );
 
   useEffect(() => {
-    const token = getTokenFromCookies();
+    const token = getTokenFromStorage();
     if (token) {
       connectSocket(token);
     }
 
     const interval = setInterval(() => {
-      const currentToken = getTokenFromCookies();
+      const currentToken = getTokenFromStorage();
 
       if (!isConnectingRef.current) {
         if (currentToken && currentToken !== currentTokenRef.current) {

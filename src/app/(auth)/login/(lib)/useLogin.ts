@@ -20,6 +20,8 @@ export const useLogin = () => {
     mutationFn: authApi.loginUser,
     onSuccess: (data) => {
       toast.success(data.message || "Login Successful");
+      localStorage.setItem("accessToken", data.data.accessToken);
+      localStorage.setItem("refreshToken", data.data.refreshToken);
       router.replace("/");
     },
     onError: (error: TErrorResponse) => {
