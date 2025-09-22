@@ -1,24 +1,31 @@
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
 import { useSocket } from "@/providers/socket-provider";
 import { useState } from "react";
+import { useAuth } from "@/providers/auth-providers";
 
 export const useLogout = () => {
-  const router = useRouter();
-  const { disconnectSocket } = useSocket(); // Access socket context
+  const { logout: authLogout } = useAuth(); // Get logout from AuthContext
+  const { disconnectSocket } = useSocket();
   const [isLoading, setIsLoading] = useState(false);
 
   const logout = () => {
     setIsLoading(true);
+
     try {
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
+      // Disconnect socket first
       disconnectSocket();
+
+      // Use AuthContext logout (this clears tokens AND updates state)
+      authLogout();
+
+      // Show success message
       toast.success("Logout Successful");
-      // Navigate to login page after successful logout
-      router.replace("/login");
-    } catch {
+    } catch (error) {
+      console.error("Logout error:", error);
       toast.error("Logout unsuccessful");
+
+      // Still try to logout even if something fails
+      authLogout();
     } finally {
       setIsLoading(false);
     }

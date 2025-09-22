@@ -10,7 +10,6 @@ import {
 import { useRouter, usePathname } from "next/navigation";
 import * as jose from "jose";
 import { accessSecret } from "@/lib/config";
-import { useLogout } from "@/app/(main)/(lib)/profile/useLogout";
 
 interface User {
   id: string;
@@ -24,13 +23,13 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   checkAuth: () => Promise<boolean>;
+  logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Define route configurations
 const PUBLIC_ROUTES = ["/login", "/register"];
-const PROTECTED_ROUTES = ["/", "/profile"];
 const DEFAULT_REDIRECT_AFTER_LOGIN = "/";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -38,17 +37,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
-  const { logout } = useLogout();
   const isAuthenticated = !!user;
 
-  // Check if route requires authentication
-  const isProtectedRoute = (path: string) => {
-    // If path starts with any protected route
-    return (
-      PROTECTED_ROUTES.some((route) => path.startsWith(route)) ||
-      // Or if it's not in public routes and not root
-      (!PUBLIC_ROUTES.includes(path) && path !== "/")
-    );
+  console.log("AuthProvider state:", { user, isAuthenticated, pathname });
+
+  // Simplified route checking
+  const isPublicRoute = (path: string) => {
+    return PUBLIC_ROUTES.includes(path);
   };
 
   // Verify JWT token
@@ -98,6 +93,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Logout function
+  const logout = () => {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    setUser(null);
+    router.replace("/login");
+  };
+
   // Initialize auth on mount
   useEffect(() => {
     const initAuth = async () => {
@@ -113,19 +116,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (isLoading) return;
 
     const currentPath = pathname;
-    const needsAuth = isProtectedRoute(currentPath);
-    const isPublicRoute = PUBLIC_ROUTES.includes(currentPath);
+    const isPublic = isPublicRoute(currentPath);
 
-    if (needsAuth && !isAuthenticated) {
-      // Redirect to login with callback URL
+    console.log("Route protection check:", {
+      currentPath,
+      isPublic,
+      isAuthenticated,
+      isLoading,
+    });
+
+    if (!isAuthenticated && !isPublic) {
+      // User not authenticated and trying to access protected route
       const callbackUrl = encodeURIComponent(currentPath);
+      console.log("Redirecting to login with callback:", callbackUrl);
       router.replace(`/login?callbackUrl=${callbackUrl}`);
-    } else if (isPublicRoute && isAuthenticated) {
-      // Get callback URL from search params or use default
+    } else if (isAuthenticated && isPublic) {
+      // User is authenticated but on public route (login/register)
       const urlParams = new URLSearchParams(window.location.search);
       const callbackUrl =
         urlParams.get("callbackUrl") || DEFAULT_REDIRECT_AFTER_LOGIN;
-      router.replace(decodeURIComponent(callbackUrl));
+      const decodedUrl = decodeURIComponent(callbackUrl);
+
+      console.log("Redirecting authenticated user to:", decodedUrl);
+      router.replace(decodedUrl);
     }
   }, [isAuthenticated, isLoading, pathname, router]);
 
@@ -133,8 +146,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === "accessToken" && e.newValue === null) {
-        // Token was removed in another tab
-        logout();
+        setUser(null);
       }
     };
 
@@ -149,6 +161,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAuthenticated,
         isLoading,
         checkAuth,
+        logout,
       }}
     >
       {children}
