@@ -8,8 +8,7 @@ import {
   ReactNode,
 } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import * as jose from "jose";
-import { accessSecret } from "@/lib/config";
+import { authApi } from "@/tanstack/api-services/authApi";
 
 interface User {
   id: string;
@@ -46,25 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return PUBLIC_ROUTES.includes(path);
   };
 
-  // Verify JWT token
-  const verifyToken = async (token: string): Promise<User | null> => {
-    try {
-      const secret = new TextEncoder().encode(accessSecret || "");
-      const { payload } = await jose.jwtVerify(token, secret);
-
-      return {
-        id: (payload.sub as string) || (payload.userId as string),
-        email: payload.email as string,
-        name: payload.name as string,
-        role: payload.role as string,
-      };
-    } catch (error) {
-      console.error("Token verification failed:", error);
-      return null;
-    }
-  };
-
-  // Check authentication status
+  // Check authentication status by calling backend
   const checkAuth = async (): Promise<boolean> => {
     try {
       const accessToken = localStorage.getItem("accessToken");
@@ -74,20 +55,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return false;
       }
 
-      const userData = await verifyToken(accessToken);
+      // Use authApi to leverage token refresh and consistent error handling
+      const result = await authApi.loggedUser();
+      const userData = result.data;
 
-      if (userData) {
-        setUser(userData);
-        return true;
-      } else {
-        // Token invalid, clear storage
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        setUser(null);
-        return false;
-      }
+      setUser({
+        id: userData._id,
+        email: userData.email,
+        name: userData.name,
+        role: userData.role,
+      });
+      return true;
     } catch (error) {
       console.error("Auth check failed:", error);
+      // Token invalid, clear storage
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
       setUser(null);
       return false;
     }
