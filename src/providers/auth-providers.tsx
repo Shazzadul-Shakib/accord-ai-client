@@ -8,7 +8,7 @@ import {
   ReactNode,
 } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { baseUrl } from "@/lib/config";
+import { authApi } from "@/tanstack/api-services/authApi";
 
 interface User {
   id: string;
@@ -55,37 +55,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return false;
       }
 
-      // Call backend to verify token and get user data
-      // This is more secure than client-side JWT verification
-      const response = await fetch(`${baseUrl}/user/logged-user`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
+      // Use authApi to leverage token refresh and consistent error handling
+      const result = await authApi.loggedUser();
+      const userData = result.data;
+
+      setUser({
+        id: userData._id,
+        email: userData.email,
+        name: userData.name,
+        role: userData.role,
       });
-
-      if (response.ok) {
-        const result = await response.json();
-        const userData = result.data;
-
-        setUser({
-          id: userData._id,
-          email: userData.email,
-          name: userData.name,
-          role: userData.role,
-        });
-        return true;
-      } else {
-        // Token invalid, clear storage
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        setUser(null);
-        return false;
-      }
+      return true;
     } catch (error) {
       console.error("Auth check failed:", error);
+      // Token invalid, clear storage
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
       setUser(null);
       return false;
     }

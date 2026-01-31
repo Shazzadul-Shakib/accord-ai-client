@@ -7,6 +7,14 @@ const baseURL = baseUrl;
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000; // 1 second
 
+// Extend Axios config to include custom retry properties
+declare module "axios" {
+  export interface AxiosRequestConfig {
+    _retryCount?: number;
+    _retry?: boolean;
+  }
+}
+
 const apiClient = axios.create({
   baseURL,
   timeout: 60000, // Increased to 60 seconds for production
@@ -24,8 +32,10 @@ apiClient.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
 
-    // Initialize retry count
-    config.headers["X-Retry-Count"] = config.headers["X-Retry-Count"] || 0;
+    // Initialize retry count in config metadata, not headers
+    if (config._retryCount === undefined) {
+      config._retryCount = 0;
+    }
 
     return config;
   },
@@ -41,21 +51,27 @@ apiClient.interceptors.response.use(
     const originalRequest = error.config;
 
     // Handle network errors with retry logic (timeout, connection refused, etc.)
+    // Only retry idempotent methods to avoid duplicate side effects
     if (!error.response && originalRequest) {
-      const retryCount = Number(originalRequest.headers["X-Retry-Count"]) || 0;
+      const method = originalRequest.method?.toUpperCase();
+      const isIdempotent = ["GET", "HEAD", "OPTIONS"].includes(method || "");
 
-      if (retryCount < MAX_RETRIES) {
-        originalRequest.headers["X-Retry-Count"] = retryCount + 1;
+      if (isIdempotent) {
+        const retryCount = originalRequest._retryCount || 0;
 
-        // Exponential backoff: 1s, 2s, 4s
-        const delay = RETRY_DELAY * Math.pow(2, retryCount);
+        if (retryCount < MAX_RETRIES) {
+          originalRequest._retryCount = retryCount + 1;
 
-        console.log(
-          `Retrying request (attempt ${retryCount + 1}/${MAX_RETRIES}) after ${delay}ms...`,
-        );
+          // Exponential backoff: 1s, 2s, 4s
+          const delay = RETRY_DELAY * Math.pow(2, retryCount);
 
-        await new Promise((resolve) => setTimeout(resolve, delay));
-        return apiClient(originalRequest);
+          console.log(
+            `Retrying request (attempt ${retryCount + 1}/${MAX_RETRIES}) after ${delay}ms...`,
+          );
+
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          return apiClient(originalRequest);
+        }
       }
     }
 
@@ -66,7 +82,10 @@ apiClient.interceptors.response.use(
     ) {
       return Promise.reject({
         status: error?.response?.status,
-        data: error?.response?.data,
+        data: error?.response?.data || {
+          success: false,
+          message: error?.message || "Request failed",
+        },
         message: error?.message || "Request failed",
       });
     }
@@ -77,7 +96,11 @@ apiClient.interceptors.response.use(
       if (!refreshToken) {
         return Promise.reject({
           status: error?.response?.status,
-          data: error?.response?.data,
+          data: error?.response?.data || {
+            success: false,
+            message: error?.message || "Unauthorized",
+          },
+          message: error?.message || "Unauthorized",
         });
       }
       originalRequest._retry = true;
@@ -99,7 +122,7 @@ apiClient.interceptors.response.use(
         // Set Authorization header and retry original request
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
         return apiClient(originalRequest);
-      } catch (err) {
+      } catch (err: any) {
         console.error("Token refresh failed:", err);
         // Clear tokens from localStorage
         localStorage.removeItem("accessToken");
@@ -108,14 +131,26 @@ apiClient.interceptors.response.use(
         if (typeof window !== "undefined") {
           window.location.href = "/login";
         }
-        return Promise.reject(err);
+        
+        // Return consistent error shape
+        return Promise.reject({
+          status: err?.response?.status,
+          data: err?.response?.data || {
+            success: false,
+            message: err?.message || "Token refresh failed",
+          },
+          message: err?.message || "Token refresh failed",
+        });
       }
     }
 
-    // Return consistent error format
+    // Return consistent error format for all cases
     return Promise.reject({
       status: error?.response?.status,
-      data: error?.response?.data,
+      data: error?.response?.data || {
+        success: false,
+        message: error?.message || "Request failed",
+      },
       message: error?.message || "Request failed",
     });
   },
