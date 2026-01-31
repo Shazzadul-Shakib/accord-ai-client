@@ -123,6 +123,10 @@ apiClient.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
         return apiClient(originalRequest);
       } catch (err: unknown) {
+        const error = err as {
+          response?: { status?: number; data?: unknown };
+          message?: string;
+        };
         console.error("Token refresh failed:", err);
         // Clear tokens from localStorage
         localStorage.removeItem("accessToken");
@@ -134,12 +138,12 @@ apiClient.interceptors.response.use(
 
         // Return consistent error shape
         return Promise.reject({
-          status: err?.response?.status,
-          data: err?.response?.data || {
+          status: error?.response?.status,
+          data: error?.response?.data || {
             success: false,
-            message: err?.message || "Token refresh failed",
+            message: error?.message || "Token refresh failed",
           },
-          message: err?.message || "Token refresh failed",
+          message: error?.message || "Token refresh failed",
         });
       }
     }
