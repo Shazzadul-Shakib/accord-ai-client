@@ -122,7 +122,7 @@ apiClient.interceptors.response.use(
         // Set Authorization header and retry original request
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
         return apiClient(originalRequest);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Token refresh failed:", err);
         // Clear tokens from localStorage
         localStorage.removeItem("accessToken");
