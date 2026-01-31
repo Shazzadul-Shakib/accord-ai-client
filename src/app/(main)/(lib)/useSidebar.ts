@@ -35,9 +35,11 @@ export const useSidebar = (options?: { onSuccess?: () => void }) => {
   const { isFetching: isNotificationLoading, data: notifications } = useQuery({
     queryKey: ["notification"],
     queryFn: notificationApi.getNotifications,
-    staleTime: 0, // Consider data stale immediately
-    refetchOnWindowFocus: true, // Refetch when window gains focus
-    refetchInterval: 3000,
+    staleTime: 5000,
+    refetchOnWindowFocus: true,
+    refetchInterval: 5000,
+    structuralSharing: true, // Prevent rerenders if data hasn't changed
+    notifyOnChangeProps: ["data", "error"], // Only trigger rerenders on data/error changes
   });
 
   const handleChatSelect = (chatId: string) => {
