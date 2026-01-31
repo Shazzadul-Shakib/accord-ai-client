@@ -131,7 +131,7 @@ apiClient.interceptors.response.use(
         if (typeof window !== "undefined") {
           window.location.href = "/login";
         }
-        
+
         // Return consistent error shape
         return Promise.reject({
           status: err?.response?.status,
