@@ -21,7 +21,6 @@ export const useLogout = () => {
       // Show success message
       toast.success("Logout Successful");
     } catch (error) {
-      console.error("Logout error:", error);
       toast.error("Logout unsuccessful");
 
       // Still try to logout even if something fails

@@ -32,7 +32,7 @@ export const useSidebar = (options?: { onSuccess?: () => void }) => {
   });
 
   // get all user notifications
-  const { isPending: isNotificationLoading, data: notifications } = useQuery({
+  const { isFetching: isNotificationLoading, data: notifications } = useQuery({
     queryKey: ["notification"],
     queryFn: notificationApi.getNotifications,
     staleTime: 0, // Consider data stale immediately

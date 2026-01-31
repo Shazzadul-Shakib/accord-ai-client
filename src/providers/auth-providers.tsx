@@ -38,8 +38,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const isAuthenticated = !!user;
 
-  console.log("AuthProvider state:", { user, isAuthenticated, pathname });
-
   // Simplified route checking
   const isPublicRoute = (path: string) => {
     return PUBLIC_ROUTES.includes(path);
@@ -67,7 +65,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       return true;
     } catch (error) {
-      console.error("Auth check failed:", error);
       // Token invalid, clear storage
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
@@ -101,17 +98,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const currentPath = pathname;
     const isPublic = isPublicRoute(currentPath);
 
-    console.log("Route protection check:", {
-      currentPath,
-      isPublic,
-      isAuthenticated,
-      isLoading,
-    });
-
     if (!isAuthenticated && !isPublic) {
       // User not authenticated and trying to access protected route
       const callbackUrl = encodeURIComponent(currentPath);
-      console.log("Redirecting to login with callback:", callbackUrl);
       router.replace(`/login?callbackUrl=${callbackUrl}`);
     } else if (isAuthenticated && isPublic) {
       // User is authenticated but on public route (login/register)
@@ -120,7 +109,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         urlParams.get("callbackUrl") || DEFAULT_REDIRECT_AFTER_LOGIN;
       const decodedUrl = decodeURIComponent(callbackUrl);
 
-      console.log("Redirecting authenticated user to:", decodedUrl);
       router.replace(decodedUrl);
     }
   }, [isAuthenticated, isLoading, pathname, router]);

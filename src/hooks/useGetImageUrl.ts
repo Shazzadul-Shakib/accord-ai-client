@@ -23,7 +23,6 @@ const useGetImageUrl = () => {
         throw new Error("Failed to upload image to Cloudinary");
       }
     } catch (error) {
-      console.error("Error uploading image:", error);
       throw error;
     }
   };

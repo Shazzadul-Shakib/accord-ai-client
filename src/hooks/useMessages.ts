@@ -83,7 +83,7 @@ export const useMessage = (): UseMessageReturn => {
 
     // Listen for errors
     const handleErrorMessage = (error: Error | string) => {
-      console.error("❌ Socket error:", error);
+      // Silent error handling
     };
 
     // Register event listeners

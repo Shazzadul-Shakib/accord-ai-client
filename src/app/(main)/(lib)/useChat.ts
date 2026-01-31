@@ -248,7 +248,6 @@ export const useChat = () => {
       try {
         return await fetchNextPage();
       } catch (error) {
-        console.error("Error fetching next page:", error);
         toast.error("Failed to load older messages");
         throw error;
       }

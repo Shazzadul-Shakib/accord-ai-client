@@ -86,7 +86,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         socket.io.removeAllListeners();
       }
     } catch (error) {
-      console.error("Error during socket cleanup:", error);
+      // Silent error handling
     }
   }, []);
 
@@ -145,17 +145,14 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       }, 15000); // Increased timeout
 
       try {
-        const newSocket = io(
-          process.env.NEXT_PUBLIC_SOCKET_URL,
-          {
-            auth: { token },
-            transports: ["polling", "websocket"], // Default order for reliability
-            reconnection: false,
-            timeout: 10000,
-            forceNew: true,
-            autoConnect: true,
-          },
-        );
+        const newSocket = io(process.env.NEXT_PUBLIC_SOCKET_URL, {
+          auth: { token },
+          transports: ["polling", "websocket"], // Default order for reliability
+          reconnection: false,
+          timeout: 10000,
+          forceNew: true,
+          autoConnect: true,
+        });
 
         newSocket.on("connect", () => {
           clearTimeout(connectionTimeoutRef.current);
@@ -226,7 +223,6 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         socketRef.current = newSocket;
         setSocket(newSocket);
       } catch (error) {
-        console.error("Failed to create socket:", error);
         isConnectingRef.current = false;
         clearTimeout(connectionTimeoutRef.current);
       }
